@@ -1,5 +1,5 @@
-# Projet Pointu — Synopsis
-### *Sans spoilers*
+# Projet Pointu
+### *Synopsis*
 
 ---
 
@@ -17,7 +17,7 @@ Sa douleur est réelle. Sa détermination, sans faille.
 Face à lui, **Pointu** — une tortue ancienne dont la carapace porte les cicatrices
 de cycles entiers de combat et de sagesse accumulée.
 Gardien d'un secret qu'il ne peut révéler seul,
-il sème depuis toujours des indices que personne ne sait lire.
+il cherche depuis toujours les fragments de souvenirs de ce monde.
 
 En rejoignant l'Antre, vous entrez dans une quête qui dépasse
 le simple affrontement entre bien et mal.
@@ -28,7 +28,4 @@ Ce que vous découvrirez en chemin changera votre regard sur Arbonet.
 Et peut-être sur bien plus que ça.
 
 ---
-
-*La légende de Pointu n'est que le début.*
-*Le monde est bien plus vaste.*
 

@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Florian\\pjt\\Pointupjt\\Pointu-pjt\\Pointu-pjt.csproj",
+      "projectUniqueName": "C:\\Users\\Florian\\pjt\\Pointu-PJT\\Apprentissage\\Pointu-pjt\\Pointu-pjt.csproj",
       "projectName": "Pointu-pjt",
-      "projectPath": "C:\\Users\\Florian\\pjt\\Pointupjt\\Pointu-pjt\\Pointu-pjt.csproj",
+      "projectPath": "C:\\Users\\Florian\\pjt\\Pointu-PJT\\Apprentissage\\Pointu-pjt\\Pointu-pjt.csproj",
       "packagesPath": "C:\\Users\\Florian\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Florian\\pjt\\Pointupjt\\Pointu-pjt\\obj\\",
+      "outputPath": "C:\\Users\\Florian\\pjt\\Pointu-PJT\\Apprentissage\\Pointu-pjt\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Florian\\AppData\\Roaming\\NuGet\\NuGet.Config",

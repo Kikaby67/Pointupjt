@@ -41,7 +41,7 @@ public class CPHInline
 		Directory.CreateDirectory(@"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs");
 		File.WriteAllText(cheminFichier, profil);
 
-		CPH.SendMessage(nomJoueur + " Bien, le bonjour Aventurier de l'Antre ! Ton fragment de Carapace est prêt. Niveau 1 | XP : 0 | Ram : 10");
+		CPH.SendMessage(nomJoueur + " Bien, le bonjour Aventurier de l'Antre ! Ton fragment de Carapace est prêt. Grâce à lui tu pourras voir tes informations d'aventurier comme ceci :\nNiveau 1 | XP : 0 | Ram : 10");
 
 		return true;
 	}

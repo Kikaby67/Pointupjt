@@ -55,9 +55,44 @@ Each player file is stored at `Donnees/joueurs/{username}.json`:
 
 The narrative takes place in **Arbonet** — a world where nature and technology coexist. The player is guided by **Pointu**, an ancient turtle guardian. The antagonist is **Hector-Pierre Castor**, who corrupts the world's memories. Full lore is in `Lore/LA_LEGENDE_DE_POINTU_V2.md`.
 
+## Discord Bot (DiscordBot/)
+
+Un bot Discord Python déployé sur **Discloud** (plan gratuit) qui permet aux joueurs de consulter leur profil Arbonet depuis Discord.
+
+```
+DiscordBot/
+├── bot_discord.py      # Bot principal (discord.py)
+└── discloud.config     # Config de déploiement Discloud
+```
+
+### Commandes Discord
+
+- `!profil` — affiche le profil du joueur (niveau, XP, RAM, sac)
+- `!arbonet` — présente l'univers du jeu
+- `!aide` — liste les commandes
+
+Les commandes sont restreintes au channel `CHANNEL_ID = 1490232175382102016`.
+
+### Données joueurs
+
+Les profils sont lus depuis le repo GitHub **Kikaby67/Pointupjt** (repo public). Pas de token GitHub nécessaire pour la lecture — les appels API se font sans authentification.
+
+### Déploiement Discloud
+
+- `LANG=python` obligatoire dans `discloud.config`
+- `DISCORD_TOKEN` hardcodé dans `bot_discord.py` (repo public GitHub → **ne pas pusher ce fichier avec le token dedans**)
+- Pour redéployer : zipper `bot_discord.py` + `discloud.config` + `requirements.txt` et uploader sur discloud.app
+
+### Sécurité tokens
+
+- Le repo GitHub **Kikaby67/Pointupjt** est **public** → pas de `GITHUB_TOKEN` nécessaire
+- Le `DISCORD_TOKEN` est dans le code, **ne jamais pusher `bot_discord.py` sur GitHub**
+
 ## Tech Stack
 
 - **C# / .NET 10.0** — game logic
 - **Streamer.bot** — Twitch bot platform that executes C# scripts on chat commands
+- **Python / discord.py** — Discord bot
+- **Discloud** — hébergement du bot Discord (plan gratuit)
 - **JSON** — player data persistence
 - **Twitch + OBS** — streaming integration

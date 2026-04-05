@@ -20,21 +20,19 @@ def log_error(exc_type, exc_value, exc_tb):
 sys.excepthook = log_error
 
 # ─── CONFIG ───────────────────────────────────────────
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "MTQ5MDIyNDA2ODU1NTcwMjQ0NA.Gn73ZW.48pnIWaIUEiVLe9fIem8YmP5O5nBPXgdOMIDX0")
-GITHUB_TOKEN  = os.getenv("GITHUB_TOKEN",  "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")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GITHUB_REPO   = "Kikaby67/Pointupjt"
 CHANNEL_ID    = 1490232175382102016
 
 # ─── GITHUB ───────────────────────────────────────────
 
 def get_joueur(nom: str) -> Optional[dict]:
-    """Lit le profil d'un joueur depuis le repo GitHCOLLE_ub."""
+    """Lit le profil d'un joueur depuis le repo GitHub."""
     url = (
         f"https://api.github.com/repos/{GITHUB_REPO}"
         f"/contents/Donnees/joueurs/{nom}.json"
     )
     headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
     resp = requests.get(url, headers=headers, timeout=10)

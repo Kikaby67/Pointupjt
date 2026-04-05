@@ -2,19 +2,33 @@ import discord
 import os
 import json
 import base64
+import sys
+import traceback
+import datetime
 import requests
+from typing import Optional
 from discord.ext import commands
 
+# ─── LOG ERREURS ──────────────────────────────────────
+def log_error(exc_type, exc_value, exc_tb):
+    with open("error.log", "a") as f:
+        f.write(
+            f"{datetime.datetime.now()} - "
+            f"{''.join(traceback.format_exception(exc_type, exc_value, exc_tb))}\n"
+        )
+
+sys.excepthook = log_error
+
 # ─── CONFIG ───────────────────────────────────────────
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-GITHUB_TOKEN  = os.getenv("GITHUB_TOKEN")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "MTQ5MDIyNDA2ODU1NTcwMjQ0NA.Gn73ZW.48pnIWaIUEiVLe9fIem8YmP5O5nBPXgdOMIDX0")
+GITHUB_TOKEN  = os.getenv("GITHUB_TOKEN",  "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")
 GITHUB_REPO   = "Kikaby67/Pointupjt"
 CHANNEL_ID    = 1490232175382102016
 
 # ─── GITHUB ───────────────────────────────────────────
 
-def get_joueur(nom: str) -> dict | None:
-    """Lit le profil d'un joueur depuis le repo GitHub."""
+def get_joueur(nom: str) -> Optional[dict]:
+    """Lit le profil d'un joueur depuis le repo GitHCOLLE_ub."""
     url = (
         f"https://api.github.com/repos/{GITHUB_REPO}"
         f"/contents/Donnees/joueurs/{nom}.json"

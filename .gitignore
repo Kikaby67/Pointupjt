@@ -1,0 +1,12 @@
+# Fichiers secrets — ne jamais committer
+DiscordBot/lancer.ps1
+*.env
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# .NET
+bin/
+obj/

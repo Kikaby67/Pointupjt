@@ -1,7 +1,23 @@
 {
   "nomJoueur": "kikabyGaming",
-  "niveau": 1,
-  "xp": 0,
+  "dateInscription": "12-05-2026",
   "ram": 10,
-  "sac": []
+  "niveau": 1,
+  "experience": 0,
+  "classeChoisie": false,
+  "classe": "",
+  "sousClasse": "",
+  "pvMax": 0,
+  "pvActuels": 0,
+  "classeArmure": 0,
+  "bonusAttaque": 0,
+  "zoneActuelle": "Foret-Memoire",
+  "enQuete": false,
+  "enCombat": false,
+  "inventaire": [],
+  "statistiques": {
+    "combatsGagnes": 0,
+    "combatsPerdus": 0,
+    "quetesTerminees": 0
+  }
 }

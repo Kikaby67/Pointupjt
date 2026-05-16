@@ -1,0 +1,33 @@
+{
+  "nomJoueur": "kikabyGaming",
+  "ram": 10,
+  "niveau": 1,
+  "experience": 0,
+  "classeChoisie": true,
+  "classe": "Hexadécimeur",
+  "sousClasseChoisie": false,
+  "sousClasse": "",
+  "typeArme": "Épée",
+  "pvMax": 27,
+  "pvActuels": 27,
+  "classeArmure": 16,
+  "bonusAttaque": 3,
+  "manaMax": 5,
+  "manaActuels": 5,
+  "charisme": 8,
+  "enCombat": false,
+  "enQuete": false,
+  "combatActuel": {
+    "ennemiNom": "",
+    "ennemiPVActuels": 0,
+    "buffActif": false,
+    "protectionActive": false,
+    "tourCombat": 0
+  },
+  "inventaire": [],
+  "statistiques": {
+    "combatsGagnes": 0,
+    "combatsPerdus": 0,
+    "quetesTerminees": 0
+  }
+}

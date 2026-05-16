@@ -21,17 +21,35 @@ public class CPHInline
 		if (LireValeur(json, "classeChoisie") != "true")
 		{
 			CPH.SendMessage(nomJoueur + ", choisis d'abord ta classe avec !choisirclasse !");
+			return true;
 		}
 		
-		int resultat = new Random().Next(1, 7);
-		int nouvelleCA = int.Parse(LireValeur(json, "classeArmure")) + resultat;
-		json = ModifierValeur(json, "classeArmure", nouvelleCA.ToString(), false);
+		string classe = LireValeur(json, "classe");
+		int[] baseClasse = GetClasseBase(classe);
+		int caBase = baseClasse[0];
+		int resultat = new Random().Next(1, 5); //1D4
+		int nouvelleCa = caBase + resultat;
+
+		json = ModifierValeur(json, "classeArmure",     nouvelleCa.ToString(),    false);
 		string nomStat = "CA";
 
 		File.WriteAllText(cheminFichier, json);
-		CPH.SendMessage(nomJoueur + " Jet sur " + nomStat + " : +" + resultat + " !");
+		CPH.SendMessage(nomJoueur + " À fait un Jet sur " + nomStat + " : +" + resultat + " !");
 		return true;
 	}
+
+ 	private int[] GetClasseBase(string classe)
+    {
+        switch (classe)
+        {
+            case "Hexadécimeur": return new int[] { 25, 14,  5,  8 };
+            case "Cryptolame":   return new int[] { 16, 13,  5, 11 };
+            case "Hackmancien":  return new int[] { 14, 10, 30, 10 };
+            case "Firewaller":   return new int[] { 22, 15, 25, 13 };
+            case "Algorythmien": return new int[] { 16, 11, 20, 16 };
+            default:             return new int[] { 10, 10,  0,  0 };
+        }
+    }
 
 	private string LireValeur(string json, string cle)
     {

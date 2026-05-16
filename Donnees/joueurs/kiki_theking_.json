@@ -1,0 +1,33 @@
+{
+  "nomJoueur": "Kiki_TheKinG_",
+  "ram": 10,
+  "niveau": 1,
+  "experience": 0,
+  "classeChoisie": true,
+  "classe": "Hackmancien",
+  "sousClasseChoisie": false,
+  "sousClasse": "",
+  "typeArme": "Bâton-Magique",
+  "pvMax": 18,
+  "pvActuels": 18,
+  "classeArmure": 13,
+  "bonusAttaque": 3,
+  "manaMax": 30,
+  "manaActuels": 30,
+  "charisme": 10,
+  "enCombat": false,
+  "enQuete": false,
+  "combatActuel": {
+    "ennemiNom": "",
+    "ennemiPVActuels": 0,
+    "buffActif": false,
+    "protectionActive": false,
+    "tourCombat": 0
+  },
+  "inventaire": [],
+  "statistiques": {
+    "combatsGagnes": 0,
+    "combatsPerdus": 0,
+    "quetesTerminees": 0
+  }
+}

@@ -56,6 +56,8 @@ public class CPHInline
 
             "  \"enCombat\": false,\n" +
             "  \"enQuete\": false,\n"  +
+            "  \"queteId\": \"\",\n"   +
+            "  \"queteTicksRestants\": 0,\n"    +
 
             // État du combat en cours
             // Mis à jour à chaque tour de combat

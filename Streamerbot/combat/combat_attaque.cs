@@ -200,11 +200,13 @@ public class CPHInline
             case "Corbeau-Daemon":        return new int[] { 14, 6 };
             case "Castor-Rootkit":        return new int[] { 16, 6 };
             case "Loup-Firewall":         return new int[] { 15, 8 };
-            case "Gobelin corrompu":      return new int[] { 12, 6 };
+            case "Martre-Trojan":      return new int[] { 12, 6 };
             case "Sentinelle du Castor":  return new int[] { 14, 6 };
             case "Ombre de la mémoire":   return new int[] { 11, 8 };
             case "Drone-racine":          return new int[] { 10, 4 };
             case "Parasite de données":   return new int[] { 12, 4 };
+            case "Sanglier-Crash":        return new int[] { 9,  8 };
+            case "Taupe-Malware":         return new int[] { 13, 6 };
             default:                      return new int[] { 12, 6 };
         }
     }
@@ -217,7 +219,7 @@ public class CPHInline
             case "Corbeau-Daemon":        return new int[] { 25, 5  };
             case "Castor-Rootkit":        return new int[] { 40, 8  };
             case "Loup-Firewall":         return new int[] { 60, 12 };
-            case "Gobelin corrompu":      return new int[] { 20, 4  };
+            case "Martre-Trojan":      return new int[] { 20, 4  };
             case "Sentinelle du Castor":  return new int[] { 30, 6  };
             case "Ombre de la mémoire":   return new int[] { 25, 5  };
             case "Drone-racine":          return new int[] { 15, 3  };

@@ -292,11 +292,13 @@ private string AppliquerBonusNiveau(string json, int niveau)
 
 | Nom | PV | CA | Dé dégâts | XP | RAM |
 |-----|----|----|-----------|-----|-----|
-| Gobelin corrompu | 30 | 12 | 1d6 | 20 | 4 |
+| Martre-Trojan | 30 | 12 | 1d6 | 20 | 4 |
 | Sentinelle du Castor | 25 | 14 | 1d6 | 30 | 6 |
 | Ombre de la mémoire | 20 | 11 | 1d8 | 25 | 5 |
 | Drone-racine | 15 | 10 | 1d4 | 15 | 3 |
 | Parasite de données | 18 | 12 | 1d4 | 18 | 4 |
+| Sanglier-Crash | 35 | 9 | 1d8 | 22 | 5 |
+| Taupe-Malware | 22 | 13 | 1d6 | 20 | 4 |
 
 ### Ennemis manuels (streamer via `etat_global.json`)
 
@@ -319,7 +321,7 @@ private int[] GetEnnemiStats(string nom)
         case "Corbeau-Daemon":        return new int[] { 14, 6 };
         case "Castor-Rootkit":        return new int[] { 16, 6 };
         case "Loup-Firewall":         return new int[] { 15, 8 };
-        case "Gobelin corrompu":      return new int[] { 12, 6 };
+        case "Martre-Trojan":      return new int[] { 12, 6 };
         case "Sentinelle du Castor":  return new int[] { 14, 6 };
         case "Ombre de la mémoire":   return new int[] { 11, 8 };
         case "Drone-racine":          return new int[] { 10, 4 };
@@ -337,7 +339,7 @@ private int[] GetRecompensesEnnemi(string nom)
         case "Corbeau-Daemon":        return new int[] { 25, 5  };
         case "Castor-Rootkit":        return new int[] { 40, 8  };
         case "Loup-Firewall":         return new int[] { 60, 12 };
-        case "Gobelin corrompu":      return new int[] { 20, 4  };
+        case "Martre-Trojan":      return new int[] { 20, 4  };
         case "Sentinelle du Castor":  return new int[] { 30, 6  };
         case "Ombre de la mémoire":   return new int[] { 25, 5  };
         case "Drone-racine":          return new int[] { 15, 3  };

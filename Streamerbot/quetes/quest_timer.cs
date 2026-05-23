@@ -69,8 +69,8 @@ public class CPHInline
                     if (typeRoll == 0)
                     {
                         // Rencontre combat : pause quête + déclencher combat
-                        string[] ennemis = { "Gobelin corrompu", "Sentinelle du Castor", "Ombre de la mémoire", "Drone-racine", "Parasite de données" };
-                        int[] pvEnnemis = { 30, 25, 20, 15, 18 };
+                        string[] ennemis = { "Martre-Trojan", "Sentinelle du Castor", "Ombre de la mémoire", "Drone-racine", "Parasite de données", "Sanglier-Crash", "Taupe-Malware" };
+                        int[] pvEnnemis = { 30, 25, 20, 15, 18, 35, 22 };
                         int idx = rng.Next(ennemis.Length);
 
                         json = ModifierValeur(json, "enRencontre", "true", false);

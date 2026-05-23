@@ -7,7 +7,7 @@
 ## Vue d'ensemble du projet
 
 **Pointu-PJT** est un mini-jeu RPG textuel dans le chat Twitch.
-Les viewers tapent des commandes (`!rejoindre`, `!quete`, `!attaquer`...).
+Les viewers tapent des commandes (`!rejoindre`, `!quete`, `!attaque`...).
 Chaque joueur a un fichier JSON sur le disque local. Pas de base de données.
 
 **Machine** : Windows 11, AMD Ryzen 5 5600X, 32 Go RAM
@@ -24,7 +24,16 @@ Pointu-PJT/
 ├── Streamerbot/                 # Fichiers C# collés dans Streamer.bot
 │   ├── Bonjour/
 │   ├── Rejoindre/
-│   └── ...
+│   ├── quetes/
+│   │   ├── quest_system.cs      # !quete (lancer / consulter)
+│   │   └── quest_timer.cs       # Timer QuestCheck (30s, auto-résolution + rencontres)
+│   ├── combat/
+│   │   ├── combat_attaque.cs    # !attaque
+│   │   ├── combat_soin.cs       # !soin
+│   │   ├── combat_defense.cs    # !defense
+│   │   └── combat_fuir.cs       # !fuir
+│   └── Timer_Xp/
+│       └── Timer_XP_visionnage.cs
 ├── Donnees/
 │   ├── joueurs/                 # Un .json par joueur (ex: kikabygaming.json)
 │   └── etat_global.json         # Rencontre manuelle active (streamer)
@@ -60,7 +69,7 @@ dotnet run
 - Classe toujours `CPHInline`, méthode `Execute()` retourne `bool`
 - `args["user"]` pour le pseudo viewer (JAMAIS `args["nomJoueur"]`)
 - `CPH.SendMessage(string)` pour envoyer dans le chat
-- `CPH.Wait(int ms)` pour attendre
+- `CPH.Wait(int ms)` pour attendre (ne PAS utiliser dans les quêtes — bloque Streamer.bot)
 - `CPH.LogWarn(string)` pour les logs
 - **Jamais** `Newtonsoft.Json` ni `System.Text.Json` → parser manuel uniquement
 - Chemins avec `@"..."` pour éviter les doubles backslashes
@@ -138,6 +147,12 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
   "queteId": "",
   "queteTicksRestants": 0,
   "queteDernierTick": 0,
+  "enRencontre": false,
+  "rencontreType": "",
+  "quetePauseDebut": 0,
+  "queteTotalPause": 0,
+  "queteCooldownFin": 0,
+  "dernierCheckRencontre": 0,
   "combatActuel": {
     "ennemiNom": "",
     "ennemiPVActuels": 0,
@@ -155,6 +170,10 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
 ```
 
 > ⚠️ L'ancien format (`xp`, `sac`) est obsolète. Le champ XP s'appelle `experience`.
+>
+> Les champs combat (`ennemiNom`, `ennemiPVActuels`, `buffActif`, `tourCombat`) sont dans `combatActuel` (objet imbriqué). `LireValeur` les trouve par recherche de chaîne — ça fonctionne tant qu'ils sont uniques dans le JSON.
+>
+> **Champs rencontre** (root) : `enRencontre`, `rencontreType`, `quetePauseDebut`, `queteTotalPause`, `queteCooldownFin`, `dernierCheckRencontre` — absents des anciens fichiers joueurs, à ajouter manuellement si besoin.
 
 ---
 
@@ -169,7 +188,7 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
 ```
 
 Utilisé uniquement pour les rencontres manuelles lancées par le streamer.
-Les rencontres de quête sont dans le JSON joueur (`combatActuel`).
+Les rencontres de quête sont gérées directement dans le JSON joueur.
 
 ---
 
@@ -178,10 +197,12 @@ Les rencontres de quête sont dans le JSON joueur (`combatActuel`).
 | Classe | PV | CA | Mana | Charisme | Arme | Dé dégâts |
 |--------|----|----|------|---------|------|-----------|
 | Hexadécimeur | 25 | 14 | 5 | 8 | Épée | 1d8 |
-| Cryptolame | 16 | 13 | 5 | 11 | Dual-Dagues | 1d6+1d6 |
+| Cryptolame | 16 | 13 | 5 | 11 | Dual-Dagues | 1d6+1d6 (2 attaques) |
 | Hackmancien | 14 | 10 | 30 | 10 | Bâton-Magique | 1d10 |
 | Firewaller | 22 | 15 | 25 | 13 | Marteau-Rune | 1d8 |
-| Algorythmien | 16 | 11 | 20 | 16 | Luth-Code | 1d6 |
+| Algorythmancien | 16 | 11 | 20 | 16 | Luth-Code | 1d6 |
+
+> ⚠️ Le nom exact en code est `"Algorythmancien"` (pas `"Algorythmien"`).
 
 **Jets de création** :
 - PV final = pvBase + `rng.Next(0, 4)` (0 à +3)
@@ -195,12 +216,12 @@ private int[] GetClasseBase(string classe)
     // { pvBase, caBase, manaBase, charismeBase }
     switch (classe)
     {
-        case "Hexadécimeur": return new int[] { 25, 14,  5,  8 };
-        case "Cryptolame":   return new int[] { 16, 13,  5, 11 };
-        case "Hackmancien":  return new int[] { 14, 10, 30, 10 };
-        case "Firewaller":   return new int[] { 22, 15, 25, 13 };
-        case "Algorythmien": return new int[] { 16, 11, 20, 16 };
-        default:             return new int[] { 10, 10,  0,  0 };
+        case "Hexadécimeur":   return new int[] { 25, 14,  5,  8 };
+        case "Cryptolame":     return new int[] { 16, 13,  5, 11 };
+        case "Hackmancien":    return new int[] { 14, 10, 30, 10 };
+        case "Firewaller":     return new int[] { 22, 15, 25, 13 };
+        case "Algorythmancien":return new int[] { 16, 11, 20, 16 };
+        default:               return new int[] { 10, 10,  0,  0 };
     }
 }
 ```
@@ -215,7 +236,7 @@ private int[] GetClasseBase(string classe)
 | Cryptolame | **Lame-Fantôme** : 3 attaques, critique+ | **Arc-Traqueur** : 1d10, typeArme="Arc" |
 | Hackmancien | **Archimage-Null** : 1d12, zone | **Tisserand** : buff UN allié +2 attaque |
 | Firewaller | **Bouclier-Sacré** : aura -1 dégât allié | **Serment-Binaire** : Smite +1d8 |
-| Algorythmien | **Virtuose** : 1d8 + buff TOUS | **Guérisseur-Fréquence** : 1d8+3, !revive |
+| Algorythmancien | **Virtuose** : 1d8 + buff TOUS | **Guérisseur-Fréquence** : 1d8+3, !revive |
 
 ---
 
@@ -267,29 +288,61 @@ private string AppliquerBonusNiveau(string json, int niveau)
 
 ## Ennemis
 
+### Ennemis de rencontre de quête (lancés par `quest_timer.cs`)
+
+| Nom | PV | CA | Dé dégâts | XP | RAM |
+|-----|----|----|-----------|-----|-----|
+| Gobelin corrompu | 30 | 12 | 1d6 | 20 | 4 |
+| Sentinelle du Castor | 25 | 14 | 1d6 | 30 | 6 |
+| Ombre de la mémoire | 20 | 11 | 1d8 | 25 | 5 |
+| Drone-racine | 15 | 10 | 1d4 | 15 | 3 |
+| Parasite de données | 18 | 12 | 1d4 | 18 | 4 |
+
+### Ennemis manuels (streamer via `etat_global.json`)
+
+| Nom | PV | CA | Dé dégâts | XP | RAM |
+|-----|----|----|-----------|-----|-----|
+| Insecte-Bug | — | 8 | 1d4 | 10 | 2 |
+| Corbeau-Daemon | — | 14 | 1d6 | 25 | 5 |
+| Castor-Rootkit | — | 16 | 1d6 | 40 | 8 |
+| Loup-Firewall | — | 15 | 1d8 | 60 | 12 |
+
+### Méthodes de lookup dans les fichiers combat
+
 ```csharp
-// { pvMax, classeArmure, desDegats, xpRecompense, ramRecompense }
-private int[] GetEnnemi(string nom)
+// { classeArmure, desDegats } — utilisé dans tous les fichiers combat
+private int[] GetEnnemiStats(string nom)
 {
     switch (nom)
     {
-        case "insecte-bug":    return new int[] {  5,  8, 4, 10,  2 };
-        case "corbeau-daemon": return new int[] { 10, 14, 6, 25,  5 };
-        case "castor-rootkit": return new int[] { 15, 16, 6, 40,  8 };
-        case "loup-firewall":  return new int[] { 18, 15, 8, 60, 12 };
-        default:               return new int[] {  5,  8, 4,  5,  1 };
+        case "Insecte-Bug":           return new int[] { 8,  4 };
+        case "Corbeau-Daemon":        return new int[] { 14, 6 };
+        case "Castor-Rootkit":        return new int[] { 16, 6 };
+        case "Loup-Firewall":         return new int[] { 15, 8 };
+        case "Gobelin corrompu":      return new int[] { 12, 6 };
+        case "Sentinelle du Castor":  return new int[] { 14, 6 };
+        case "Ombre de la mémoire":   return new int[] { 11, 8 };
+        case "Drone-racine":          return new int[] { 10, 4 };
+        case "Parasite de données":   return new int[] { 12, 4 };
+        default:                      return new int[] { 12, 6 };
     }
 }
 
-private string NomAffiche(string nom)
+// { xpRecompense, ramRecompense } — utilisé dans combat_attaque.cs uniquement
+private int[] GetRecompensesEnnemi(string nom)
 {
     switch (nom)
     {
-        case "insecte-bug":    return "🦟 Insecte-Bug";
-        case "corbeau-daemon": return "🦅 Corbeau-Daemon";
-        case "castor-rootkit": return "🦫 Castor-Rootkit";
-        case "loup-firewall":  return "🐺 Loup-Firewall";
-        default:               return nom;
+        case "Insecte-Bug":           return new int[] { 10, 2  };
+        case "Corbeau-Daemon":        return new int[] { 25, 5  };
+        case "Castor-Rootkit":        return new int[] { 40, 8  };
+        case "Loup-Firewall":         return new int[] { 60, 12 };
+        case "Gobelin corrompu":      return new int[] { 20, 4  };
+        case "Sentinelle du Castor":  return new int[] { 30, 6  };
+        case "Ombre de la mémoire":   return new int[] { 25, 5  };
+        case "Drone-racine":          return new int[] { 15, 3  };
+        case "Parasite de données":   return new int[] { 18, 4  };
+        default:                      return new int[] { 15, 3  };
     }
 }
 ```
@@ -305,7 +358,7 @@ Trigger : Command Triggered → !bonjour
 ```
 
 ### `!rejoindre` → `Commande_Rejoindre.cs`
-Crée le JSON joueur avec tous les champs. Indique `!choisirclasse`.
+Crée le JSON joueur avec tous les champs (y compris les champs rencontre). Indique `!choisirclasse`.
 ```
 Trigger : Command Triggered → !rejoindre
 ```
@@ -327,61 +380,114 @@ Initialise les stats + jets de dés. Bloque si classe déjà choisie.
 Trigger : Command Triggered → !choisirclasse
 ```
 
-### `!quete` → `Commande_Quete.cs`
-Version CPH.Wait() :
-- Quête aléatoire parmi 13 (artefact_01-05, service_01-05, entretien_01-03)
-- `CPH.Wait(int.Parse(data[1]) * 300000)` — durée proportionnelle
-- Relit le fichier après attente
-- 80% succès (+XP +Ram) / 20% échec
-- Met `enQuete = false` à la fin
+### `!quete` → `quetes/quest_system.cs`
+Système basé sur timestamps Unix — **pas de `CPH.Wait()`**.
+
+**Flux :**
+1. Vérifie `queteCooldownFin` → si en cooldown, annonce les minutes restantes
+2. Vérifie `classeChoisie`, `enCombat`
+3. Si `enQuete == true` :
+   - Si `enRencontre == true` → "tu es en pleine rencontre !"
+   - Sinon : calcule `secondesEcoulees = (maintenant - queteDernierTick) - queteTotalPause`, si terminé → résoudre (80% succès)
+4. Sinon : choisit une quête aléatoire, initialise tous les champs, `CPH.EnableTimer("QuestCheck")`
 
 **Quêtes** (`GetQueteData`) — Format `{ description, ticks, xp, ram }` :
 ```
-artefact_01 : 6 ticks → 100 XP · 10 Ram
-artefact_02 : 5 ticks → 80 XP  · 8 Ram
-artefact_03 : 3 ticks → 50 XP  · 5 Ram
-artefact_04 : 2 ticks → 30 XP  · 3 Ram
-artefact_05 : 1 tick  → 10 XP  · 1 Ram
-service_01  : 3 ticks → 50 XP  · 5 Ram
-service_02  : 4 ticks → 70 XP  · 7 Ram
-service_03  : 5 ticks → 90 XP  · 9 Ram
-service_04  : 6 ticks → 120 XP · 12 Ram
-service_05  : 2 ticks → 40 XP  · 4 Ram
-entretien_01: 3 ticks → 50 XP  · 5 Ram
-entretien_02: 4 ticks → 70 XP  · 7 Ram
-entretien_03: 5 ticks → 90 XP  · 9 Ram
+artefact_01 : 6 ticks (30 min) → 100 XP · 10 Ram
+artefact_02 : 5 ticks (25 min) → 80 XP  · 8 Ram
+artefact_03 : 3 ticks (15 min) → 50 XP  · 5 Ram
+artefact_04 : 2 ticks (10 min) → 30 XP  · 3 Ram
+artefact_05 : 1 tick  (5 min)  → 10 XP  · 1 Ram
+service_01  : 3 ticks (15 min) → 50 XP  · 5 Ram
+service_02  : 4 ticks (20 min) → 70 XP  · 7 Ram
+service_03  : 5 ticks (25 min) → 90 XP  · 9 Ram
+service_04  : 6 ticks (30 min) → 120 XP · 12 Ram
+service_05  : 2 ticks (10 min) → 40 XP  · 4 Ram
+entretien_01: 3 ticks (15 min) → 50 XP  · 5 Ram
+entretien_02: 4 ticks (20 min) → 70 XP  · 7 Ram
+entretien_03: 5 ticks (25 min) → 90 XP  · 9 Ram
 ```
+> 1 tick = 5 minutes réelles
 ```
 Trigger : Command Triggered → !quete
 ```
 
-### `!attaquer` → `Commande_Attaquer.cs`
-Combat D&D5 simplifié, tour par tour :
-1. Si `enCombat = false` → initialise depuis `etat_global.json`
-2. Si `enCombat = true` → continue depuis `combatActuel`
-3. Joueur attaque : d20 + bonusAttaque vs CA ennemi
-4. Si touché → dégâts selon classe, ennemiPV -= dégâts
-5. ennemiPV ≤ 0 → victoire (+XP +Ram +combatsGagnes, reset, check niveau)
-6. Ennemi riposte : d20 vs CA joueur (+3 si protectionActive)
-7. pvActuels ≤ 0 → défaite (pvActuels = 1, reset, si enQuete → quête perdue)
+### `quest_timer.cs` — Timer QuestCheck (30s)
+Parcourt tous les fichiers joueurs. Pour chaque joueur `enQuete == true` :
+
+**CAS 1** — `enRencontre == true` et `enCombat == false` (combat terminé) :
+- `pvActuels > 0` → victoire : ajoute durée pause à `queteTotalPause`, clear rencontre, message "quête reprend"
+- `pvActuels <= 0` → défaite : `enQuete = false`, `queteCooldownFin = maintenant + 1200` (20 min)
+
+**CAS 2** — Check rencontre toutes les 3 min (`maintenant - dernierCheckRencontre >= 180`) :
+- 40% chance de rencontre, parmi 3 types :
+  - **Combat (1/3)** : pause quête (`quetePauseDebut`), `enCombat = true`, ennemi aléatoire → message "un X surgit"
+  - **Événement (1/3)** : 50% +XP (10-29), 50% -RAM (5-14), aucune pause
+  - **Marchand (1/3)** : soin aléatoire (5-14 PV, plafonné pvMax), aucune pause
+
+**CAS 3** — Vérification fin de quête :
+- `secondesEcoulees = (maintenant - queteDernierTick) - queteTotalPause`
+- Si terminé → 80% succès (+XP +RAM) / 20% échec
+
+Désactive le timer `QuestCheck` si plus aucun joueur en quête.
+```
+Trigger : Timed Action → QuestCheck (30s, repeat)
+Activé par : CPH.EnableTimer("QuestCheck") depuis quest_system.cs
+Désactivé par : CPH.DisableTimer("QuestCheck") si plus de quête active
+```
+
+### `!attaque` → `combat/combat_attaque.cs`
+Combat tour par tour — **seulement si `enCombat == true`**.
+
+- **Cryptolame** : 2 jets d20 séparés + bonusTotal vs CA ennemi → chacun fait 1d6 si touché
+- **Autres classes** : 1 jet d20 + bonusTotal vs CA ennemi → dégâts par classe si touché
+- `buffActif` ajoute +2 au bonusAttaque ce tour
+- **Victoire** (`ennemiPVActuels <= 0`) : `enCombat = false`, +XP +RAM via `GetRecompensesEnnemi`, si `enRencontre` → note que la quête reprend
+- **Riposte ennemi** : d20 vs `classeArmure` joueur → dégâts via `GetEnnemiStats[1]`
+- **Défaite** (`pvActuels <= 0`) : `enCombat = false`
 
 ```csharp
-// Dégâts joueur par classe
-private int CalculerDegatsJoueur(string classe, Random rng)
+private int RollDegats(string classe, Random rng)
 {
     switch (classe)
     {
-        case "Hexadécimeur": return rng.Next(1, 9);
-        case "Cryptolame":   return rng.Next(1, 7) + rng.Next(1, 7); // dual
-        case "Hackmancien":  return rng.Next(1, 11);
-        case "Firewaller":   return rng.Next(1, 9);
-        case "Algorythmien": return rng.Next(1, 7);
-        default:             return rng.Next(1, 7);
+        case "Hexadécimeur":    return rng.Next(1, 9);   // 1d8
+        case "Hackmancien":     return rng.Next(1, 11);  // 1d10
+        case "Firewaller":      return rng.Next(1, 9);   // 1d8
+        case "Algorythmancien": return rng.Next(1, 7);   // 1d6
+        default:                return rng.Next(1, 7);   // 1d6
     }
 }
 ```
 ```
-Trigger : Command Triggered → !attaquer
+Trigger : Command Triggered → !attaque
+```
+
+### `!soin` → `combat/combat_soin.cs`
+Soin pendant le combat — coûte 5 mana.
+- Si `manaActuels < 5` : soin échoue mais l'ennemi riposte quand même
+- Soin par classe : Hexadécimeur/Cryptolame 1d4 · Hackmancien/Algorythmancien 1d6 · Firewaller 1d8+3
+- Soin plafonné à `pvMax`
+- L'ennemi riposte toujours après (que le soin réussisse ou non)
+```
+Trigger : Command Triggered → !soin
+```
+
+### `!defense` → `combat/combat_defense.cs`
+Posture défensive — pas d'attaque joueur ce tour.
+- CA temporaire = `classeArmure + 3` pour ce tour uniquement
+- L'ennemi attaque contre cette CA augmentée
+```
+Trigger : Command Triggered → !defense
+```
+
+### `!fuir` → `combat/combat_fuir.cs`
+Tentative de fuite du combat.
+- Seuil : **Cryptolame** d20 ≥ 8 · **Autres** d20 ≥ 12
+- **Fuite réussie** : `enCombat = false` · si `enRencontre == true` → calcule pause, met à jour `queteTotalPause`, clear rencontre → quête reprend
+- **Fuite échouée** : l'ennemi riposte (d20 vs CA) · si `pvActuels <= 0` → défaite
+```
+Trigger : Command Triggered → !fuir
 ```
 
 ### Channel Point Rewards
@@ -423,24 +529,6 @@ Trigger : Manuel (bouton Streamer.bot)
 
 ## Commandes À IMPLÉMENTER ❌
 
-### `!soigner` → `Commande_Soigner.cs`
-- Coûte 5 mana (`manaActuels -= 5`)
-- Soins par classe :
-  - Hexadécimeur / Cryptolame : 1d4
-  - Hackmancien / Algorythmien : 1d6
-  - Firewaller : 1d8+3
-- Bloque si manaActuels < 5
-
-### `!fuir` → `Commande_Fuir.cs`
-- d20 ≥ 12 → fuite réussie → reset combat
-- Cryptolame : seuil 8 au lieu de 12
-- Bloque si pas en combat
-
-### `!proteger` → `Commande_Proteger.cs`
-- Met `protectionActive = true` dans `combatActuel`
-- Dans `!attaquer` : si protectionActive → CA effective +3, reset après riposte ennemi
-- Pas d'attaque le tour où on protège
-
 ### `!choisirSousClasse [nom]` → `Commande_ChoisirSousClasse.cs`
 - Disponible uniquement si `niveau >= 5` et `sousClasseChoisie = false`
 - Applique les bonus de la sous-classe choisie
@@ -459,6 +547,7 @@ Trigger : Manuel (bouton Streamer.bot)
 7. Après modification de `experience` → vérifier `CalculerNiveau` + `AppliquerBonusNiveau`
 8. Copier les 3 méthodes utilitaires en bas du fichier
 9. Utiliser `nomJoueur.ToLower()` pour le nom du fichier
+10. Ne jamais utiliser `CPH.Wait()` dans un flux de quête — bloque Streamer.bot
 
 ---
 

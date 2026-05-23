@@ -205,9 +205,9 @@ Les rencontres de quête sont gérées directement dans le JSON joueur.
 > ⚠️ Le nom exact en code est `"Algorythmancien"` (pas `"Algorythmien"`).
 
 **Jets de création** :
-- PV final = pvBase + `rng.Next(0, 4)` (0 à +3)
-- CA finale = caBase + `rng.Next(0, 4)` (0 à +3)
-- bonusAttaque = `rng.Next(0, 4)` (0 à +3)
+- PV final = pvBase + `rng.Next(1, 7)` (1d6 → +1 à +6)
+- CA finale = caBase + `rng.Next(1, 5)` (1d4 → +1 à +4)
+- bonusAttaque = `rng.Next(1, 5)` (1d4 → +1 à +4)
 
 ```csharp
 // Bases de classe pour les Channel Point rewards

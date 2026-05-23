@@ -17,11 +17,11 @@
 ### Stats de base
 | Stat | Valeur de base | Jet de création |
 |------|---------------|-----------------|
-| PV | 25 | + 1d4 (0 à +3) |
-| CA | 14 | + 1d4 (0 à +3) |
+| PV | 25 | + 1d6 (+1 à +6) |
+| CA | 14 | + 1d4 (+1 à +4) |
 | Mana | 5 | fixe |
 | Charisme | 8 | fixe |
-| Bonus Attaque | 0 | + 1d4 (0 à +3) |
+| Bonus Attaque | 0 | + 1d4 (+1 à +4) |
 | Arme | Épée | fixe |
 | Dé de dégâts | 1d8 | — |
 
@@ -68,11 +68,11 @@
 ### Stats de base
 | Stat | Valeur de base | Jet de création |
 |------|---------------|-----------------|
-| PV | 16 | + 1d4 (0 à +3) |
-| CA | 13 | + 1d4 (0 à +3) |
+| PV | 16 | + 1d6 (+1 à +6) |
+| CA | 13 | + 1d4 (+1 à +4) |
 | Mana | 5 | fixe |
 | Charisme | 11 | fixe |
-| Bonus Attaque | 0 | + 1d4 (0 à +3) |
+| Bonus Attaque | 0 | + 1d4 (+1 à +4) |
 | Arme | Dual-Dagues | fixe |
 | Dé de dégâts | 1d6 + 1d6 | 2 attaques par tour |
 
@@ -110,11 +110,11 @@
 ### Stats de base
 | Stat | Valeur de base | Jet de création |
 |------|---------------|-----------------|
-| PV | 14 | + 1d4 (0 à +3) |
-| CA | 10 | + 1d4 (0 à +3) |
+| PV | 14 | + 1d6 (+1 à +6) |
+| CA | 10 | + 1d4 (+1 à +4) |
 | Mana | 30 | fixe |
 | Charisme | 10 | fixe |
-| Bonus Attaque | 0 | + 1d4 (0 à +3) |
+| Bonus Attaque | 0 | + 1d4 (+1 à +4) |
 | Arme | Bâton-Magique | fixe |
 | Dé de dégâts | 1d10 | magique |
 
@@ -146,11 +146,11 @@
 ### Stats de base
 | Stat | Valeur de base | Jet de création |
 |------|---------------|-----------------|
-| PV | 22 | + 1d4 (0 à +3) |
-| CA | 15 | + 1d4 (0 à +3) |
+| PV | 22 | + 1d6 (+1 à +6) |
+| CA | 15 | + 1d4 (+1 à +4) |
 | Mana | 25 | fixe |
 | Charisme | 13 | fixe |
-| Bonus Attaque | 0 | + 1d4 (0 à +3) |
+| Bonus Attaque | 0 | + 1d4 (+1 à +4) |
 | Arme | Marteau-Rune | fixe |
 | Dé de dégâts | 1d8 | — |
 
@@ -184,11 +184,11 @@
 ### Stats de base
 | Stat | Valeur de base | Jet de création |
 |------|---------------|-----------------|
-| PV | 16 | + 1d4 (0 à +3) |
-| CA | 11 | + 1d4 (0 à +3) |
+| PV | 16 | + 1d6 (+1 à +6) |
+| CA | 11 | + 1d4 (+1 à +4) |
 | Mana | 20 | fixe |
 | Charisme | 16 | fixe |
-| Bonus Attaque | 0 | + 1d4 (0 à +3) |
+| Bonus Attaque | 0 | + 1d4 (+1 à +4) |
 | Arme | Luth-Code | fixe |
 | Dé de dégâts | 1d6 | magique |
 

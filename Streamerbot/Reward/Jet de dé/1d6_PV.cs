@@ -46,7 +46,7 @@ public class CPHInline
             case "Cryptolame":   return new int[] { 16, 13,  5, 11 };
             case "Hackmancien":  return new int[] { 14, 10, 30, 10 };
             case "Firewaller":   return new int[] { 22, 15, 25, 13 };
-            case "Algorythmien": return new int[] { 16, 11, 20, 16 };
+            case "Algorythmancien": return new int[] { 16, 11, 20, 16 };
             default:             return new int[] { 10, 10,  0,  0 };
         }
     }

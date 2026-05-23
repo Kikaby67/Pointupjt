@@ -58,6 +58,14 @@ public class CPHInline
             "  \"enQuete\": false,\n"  +
             "  \"queteId\": \"\",\n"   +
             "  \"queteTicksRestants\": 0,\n"    +
+            "  \"queteDernierTick\": 0,\n"      +
+            "  \"queteTotalPause\": 0,\n"       +
+            "  \"quetePauseDebut\": 0,\n"       +
+            "  \"queteCooldownFin\": 0,\n"      +
+            "  \"enRencontre\": false,\n"       +
+            "  \"rencontreType\": \"\",\n"      +
+            "  \"dernierCheckRencontre\": 0,\n" +
+            "  \"reposCooldownFin\": 0,\n"      +
 
             // État du combat en cours
             // Mis à jour à chaque tour de combat

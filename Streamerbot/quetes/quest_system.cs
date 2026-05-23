@@ -59,7 +59,7 @@ public class CPHInline
             if (secondesEcoulees < secondesRequises)
             {
                 int minutesRestantes = (int)Math.Ceiling((secondesRequises - secondesEcoulees) / 60.0);
-                CPH.SendMessage(nomJoueur + ", ta quête est en cours (" + queteEnCours + "). Il te reste environ " + minutesRestantes + " minute(s). Résultat automatique !");
+                CPH.SendMessage(nomJoueur + ", ta quête est en cours (" + queteEnCours + "). Il te reste environ " + minutesRestantes + " minute(s).");
                 return true;
             }
 
@@ -105,7 +105,7 @@ public class CPHInline
         json = ModifierValeur(json, "dernierCheckRencontre", maintenant.ToString(), false);
 
         File.WriteAllText(cheminFichier, json);
-        CPH.SendMessage(nomJoueur + ", tu pars en quête : " + questData[0] + " Résultat dans " + (ticks * 5) + " minutes !");
+        CPH.SendMessage(nomJoueur + ", tu pars en quête : " + questData[0] + " !" );
         CPH.EnableTimer("QuestCheck");
         return true;
     }
@@ -119,91 +119,91 @@ public class CPHInline
                 return new string[]
                 {
                     "Direction le nord ! Dans une cabane perchée, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 30 min.",
+                    "un artefact de Pointu t'attend. Durée estimée : 30 min",
                     "6", "100", "10"
                 };
             case "artefact_02":
                 return new string[]
                 {
                     "Direction le sud ! Dans une grotte sombre, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 20 min.",
+                    "un artefact de Pointu t'attend. Durée estimée : 20 min",
                     "5", "80", "8"
                 };
             case "artefact_03":
                 return new string[]
                 {
                     "Direction l'est ! Dans une tour abandonnée, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 15 min.",
+                    "un artefact de Pointu t'attend. Durée estimée : 15 min",
                     "3", "50", "5"
                 };
             case "artefact_04":
                 return new string[]
                 {
                     "Direction l'ouest ! Dans une forêt mystérieuse, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 10 min.",
+                    "un artefact de Pointu t'attend. Durée estimée : 10 min",
                     "2", "30", "3"
                 };
             case "artefact_05":
                 return new string[]
                 {
                     "Direction le centre ! Dans une caverne secrète, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 5 min.",
+                    "un artefact de Pointu t'attend. Durée estimée : 5 min",
                     "1", "10", "1"
                 };
             case "service_01":
                 return new string[]
                 {
                     "Un villageois a besoin d'aide pour récolter des ressources. " +
-                    "Durée estimée : 15 min.",
+                    "Durée estimée : 15 min",
                     "3", "50", "5"
                 };
             case "service_02":
                 return new string[]
                 {
                     "Un marchand cherche un aventurier pour escorter sa caravane. " +
-                    "Durée estimée : 20 min.",
+                    "Durée estimée : 20 min",
                     "4", "70", "7"
                 };
             case "service_03":
                 return new string[]
                 {
                     "Un forgeron a besoin de matériaux rares pour fabriquer une arme. " +
-                    "Durée estimée : 25 min.",
+                    "Durée estimée : 25 min",
                     "5", "90", "9"
                 };
             case "service_04":
                 return new string[]
                 {
                     "Un noble cherche un aventurier pour une mission diplomatique. " +
-                    "Durée estimée : 30 min.",
+                    "Durée estimée : 30 min",
                     "6", "120", "12"
                 };
             case "service_05":
                 return new string[]
                 {
                     "Un mage a besoin d'aide pour collecter des ingrédients magiques. " +
-                    "Durée estimée : 10 min.",
+                    "Durée estimée : 10 min",
                     "2", "40", "4"
                 };
             case "entretien_01":
                 return new string[]
                 {
                     "Un villageois a besoin d'aide pour la sécurité de son réseau. " +
-                    "Durée estimée : 15 min.",
+                    "Durée estimée : 15 min",
                     "3", "50", "5"
                 };
             case "entretien_02":
                 return new string[]
                 {
                     "Un marchand cherche un aventurier pour renforcer sa bourique. " +
-                    "Durée estimée : 20 min.",
+                    "Durée estimée : 20 min",
                     "4", "70", "7"
                 };
             case "entretien_03":
                 return new string[]
                 {
                     "L'arbre serveur a besoin d'être entretenue. " +
-                    "Durée estimée : 25 min.",
+                    "Durée estimée : 25 min",
                     "5", "90", "9"
                 };
 

@@ -224,6 +224,8 @@ public class CPHInline
             case "Ombre de la mémoire":   return new int[] { 25, 5  };
             case "Drone-racine":          return new int[] { 15, 3  };
             case "Parasite de données":   return new int[] { 18, 4  };
+            case "Sanglier-Crash":        return new int[] { 22, 5  };
+            case "Taupe-Malware":         return new int[] { 20, 4  };
             default:                      return new int[] { 15, 3  };
         }
     }

@@ -46,6 +46,20 @@ public class CPHInline
                 CPH.SendMessage(MessageNiveau(nomJoueur, nouveauNiveau));
             }
 
+            // ── Régénération passive : +2 PV / +3 mana (hors combat) ──
+            if (LireValeur(json, "enCombat") != "true")
+            {
+                int pvActuels   = int.Parse(LireValeur(json, "pvActuels"));
+                int pvMax       = int.Parse(LireValeur(json, "pvMax"));
+                if (pvActuels < pvMax)
+                    json = ModifierValeur(json, "pvActuels", Math.Min(pvActuels + 2, pvMax).ToString(), false);
+
+                int manaActuels = int.Parse(LireValeur(json, "manaActuels"));
+                int manaMax     = int.Parse(LireValeur(json, "manaMax"));
+                if (manaActuels < manaMax)
+                    json = ModifierValeur(json, "manaActuels", Math.Min(manaActuels + 3, manaMax).ToString(), false);
+            }
+
             File.WriteAllText(cheminFichier, json);
         }
 

@@ -26,6 +26,7 @@
   "queteTotalPause": 0,
   "queteCooldownFin": 0,
   "dernierCheckRencontre": 0,
+  "reposCooldownFin": 0,
   "combatActuel": {
     "ennemiNom": "",
     "ennemiPVActuels": 0,

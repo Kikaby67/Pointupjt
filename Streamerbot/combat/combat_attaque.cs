@@ -25,6 +25,7 @@ public class CPHInline
         }
 
         string classe      = LireValeur(json, "classe");
+        string sousClasse  = LireValeur(json, "sousClasse");
         string ennemNom    = LireValeur(json, "ennemiNom");
         int ennemPV        = int.Parse(LireValeur(json, "ennemiPVActuels"));
         int joueurPV       = int.Parse(LireValeur(json, "pvActuels"));
@@ -46,27 +47,75 @@ public class CPHInline
         string msgAttaque;
         int totalDegats = 0;
 
-        if (classe == "Cryptolame")
+        if (sousClasse == "Byte-Fantôme")
         {
-            // Deux attaques séparées
-            int d20A = rng.Next(1, 21); bool hitA = (d20A + bonusTotal) >= ennemCA;
-            int d20B = rng.Next(1, 21); bool hitB = (d20B + bonusTotal) >= ennemCA;
-            int dA = hitA ? rng.Next(1, 7) : 0;
-            int dB = hitB ? rng.Next(1, 7) : 0;
+            // Cryptolame Byte-Fantôme : 3 attaques à 1d6
+            int d20A = rng.Next(1, 21); bool hA = (d20A + bonusTotal) >= ennemCA;
+            int d20B = rng.Next(1, 21); bool hB = (d20B + bonusTotal) >= ennemCA;
+            int d20C = rng.Next(1, 21); bool hC = (d20C + bonusTotal) >= ennemCA;
+            int dA = hA ? rng.Next(1, 7) : 0;
+            int dB = hB ? rng.Next(1, 7) : 0;
+            int dC = hC ? rng.Next(1, 7) : 0;
+            totalDegats = dA + dB + dC;
+            string r1 = hA ? "touché -" + dA : "raté";
+            string r2 = hB ? "touché -" + dB : "raté";
+            string r3 = hC ? "touché -" + dC : "raté";
+            msgAttaque = nomJoueur + " frappe x3 (Byte-Fantôme) → [" + r1 + "] [" + r2 + "] [" + r3 + "] = -" + totalDegats + " PV à " + ennemNom;
+        }
+        else if (sousClasse == "Surcharge")
+        {
+            // Hexadécimeur Surcharge : 2 attaques à 1d8
+            int d20A = rng.Next(1, 21); bool hA = (d20A + bonusTotal) >= ennemCA;
+            int d20B = rng.Next(1, 21); bool hB = (d20B + bonusTotal) >= ennemCA;
+            int dA = hA ? rng.Next(1, 9) : 0;
+            int dB = hB ? rng.Next(1, 9) : 0;
             totalDegats = dA + dB;
-            string r1 = hitA ? "touché -" + dA : "raté";
-            string r2 = hitB ? "touché -" + dB : "raté";
-            msgAttaque = nomJoueur + " frappe x2 → [" + r1 + "] [" + r2 + "] = -" + totalDegats + " PV à " + ennemNom;
+            string r1 = hA ? "touché -" + dA : "raté";
+            string r2 = hB ? "touché -" + dB : "raté";
+            msgAttaque = nomJoueur + " frappe x2 (Surcharge) → [" + r1 + "] [" + r2 + "] = -" + totalDegats + " PV à " + ennemNom;
+        }
+        else if (classe == "Cryptolame")
+        {
+            if (sousClasse == "Pointeur-Null")
+            {
+                // Pointeur-Null : 1 attaque 1d10
+                int d20 = rng.Next(1, 21);
+                int roll = d20 + bonusTotal;
+                bool touche = roll >= ennemCA;
+                if (touche)
+                {
+                    totalDegats = rng.Next(1, 11);
+                    msgAttaque = nomJoueur + " tire (Pointeur-Null) sur " + ennemNom + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → TOUCHÉ ! -" + totalDegats + " PV";
+                }
+                else
+                {
+                    msgAttaque = nomJoueur + " tire (Pointeur-Null) sur " + ennemNom + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → RATÉ !";
+                }
+            }
+            else
+            {
+                // Cryptolame base : 2 attaques à 1d6
+                int d20A = rng.Next(1, 21); bool hA = (d20A + bonusTotal) >= ennemCA;
+                int d20B = rng.Next(1, 21); bool hB = (d20B + bonusTotal) >= ennemCA;
+                int dA = hA ? rng.Next(1, 7) : 0;
+                int dB = hB ? rng.Next(1, 7) : 0;
+                totalDegats = dA + dB;
+                string r1 = hA ? "touché -" + dA : "raté";
+                string r2 = hB ? "touché -" + dB : "raté";
+                msgAttaque = nomJoueur + " frappe x2 → [" + r1 + "] [" + r2 + "] = -" + totalDegats + " PV à " + ennemNom;
+            }
         }
         else
         {
+            // Attaque standard (toutes les autres classes + sous-classes)
             int d20 = rng.Next(1, 21);
             int roll = d20 + bonusTotal;
             bool touche = roll >= ennemCA;
             if (touche)
             {
-                totalDegats = RollDegats(classe, rng);
-                msgAttaque = nomJoueur + " attaque " + ennemNom + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → TOUCHÉ ! -" + totalDegats + " PV";
+                totalDegats = RollDegats(classe, sousClasse, rng);
+                string label = (sousClasse == "Serment-Binaire") ? " (Smite +1d8 inclus)" : "";
+                msgAttaque = nomJoueur + " attaque " + ennemNom + label + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → TOUCHÉ ! -" + totalDegats + " PV";
             }
             else
             {
@@ -129,15 +178,17 @@ public class CPHInline
         return true;
     }
 
-    private int RollDegats(string classe, Random rng)
+    private int RollDegats(string classe, string sousClasse, Random rng)
     {
+        if (sousClasse == "Faille-Zéro")    return rng.Next(1, 13);             // 1d12
+        if (sousClasse == "Barde-Binaire")  return rng.Next(1, 9);              // 1d8
+        if (sousClasse == "Serment-Binaire") return rng.Next(1, 9) + rng.Next(1, 9); // 1d8 + Smite 1d8
         switch (classe)
         {
-            case "Hexadécimeur":    return rng.Next(1, 9);
-            case "Hackmancien":     return rng.Next(1, 11);
-            case "Firewaller":      return rng.Next(1, 9);
-            case "Algorythmancien": return rng.Next(1, 7);
-            default:                return rng.Next(1, 7);
+            case "Hexadécimeur": return rng.Next(1, 9);   // 1d8
+            case "Hackmancien":  return rng.Next(1, 11);  // 1d10
+            case "Firewaller":   return rng.Next(1, 9);   // 1d8
+            default:             return rng.Next(1, 7);   // 1d6
         }
     }
 

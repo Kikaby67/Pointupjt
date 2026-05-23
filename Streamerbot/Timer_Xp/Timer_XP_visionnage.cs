@@ -124,7 +124,7 @@ public class CPHInline
             case 2:  bonus = "+3 PV max";                                          break;
             case 3:  bonus = "+1 CA · +1 PV max";                                 break;
             case 4:  bonus = "+3 PV max";                                          break;
-            case 5:  bonus = "Sous-classe débloquée ! Tape !choisirSousClasse !";  break;
+            case 5:  bonus = "Sous-classe débloquée ! Tape !sousclasse !";  break;
             case 6:  bonus = "+3 PV max";                                          break;
             case 7:  bonus = "+1 CA · +1 PV max";                                 break;
             case 8:  bonus = "+100 Ram";                                           break;

@@ -232,11 +232,11 @@ private int[] GetClasseBase(string classe)
 
 | Classe | Sous-classe A | Sous-classe B |
 |--------|--------------|--------------|
-| Hexadécimeur | **Colosse** : +8 PV, Protection alliée | **Berserk-Octet** : 2 attaques, -2 CA |
-| Cryptolame | **Lame-Fantôme** : 3 attaques, critique+ | **Arc-Traqueur** : 1d10, typeArme="Arc" |
-| Hackmancien | **Archimage-Null** : 1d12, zone | **Tisserand** : buff UN allié +2 attaque |
-| Firewaller | **Bouclier-Sacré** : aura -1 dégât allié | **Serment-Binaire** : Smite +1d8 |
-| Algorythmancien | **Virtuose** : 1d8 + buff TOUS | **Guérisseur-Fréquence** : 1d8+3, !revive |
+| Hexadécimeur | **Bloc-Hex** : +8 PV max | **Surcharge** : 2 attaques 1d8, -2 CA |
+| Cryptolame | **Byte-Fantôme** : 3 attaques 1d6 | **Pointeur-Null** : 1d10, typeArme="Arc" |
+| Hackmancien | **Faille-Zéro** : 1d12 | **Compilateur** : buff UN allié +2 attaque |
+| Firewaller | **Protocole-Sacré** : aura -1 dégât allié | **Serment-Binaire** : Smite +1d8 |
+| Algorythmancien | **Barde-Binaire** : 1d8 + buff TOUS | **Patch-Mélodique** : soin 1d8+3 |
 
 ---
 
@@ -529,7 +529,7 @@ Trigger : Manuel (bouton Streamer.bot)
 
 ## Commandes À IMPLÉMENTER ❌
 
-### `!choisirSousClasse [nom]` → `Commande_ChoisirSousClasse.cs`
+### `!sousclasse [nom]` → `Commande_ChoisirSousClasse.cs`
 - Disponible uniquement si `niveau >= 5` et `sousClasseChoisie = false`
 - Applique les bonus de la sous-classe choisie
 - Met `sousClasseChoisie = true`

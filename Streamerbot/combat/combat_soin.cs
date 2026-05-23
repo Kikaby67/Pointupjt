@@ -25,6 +25,7 @@ public class CPHInline
         }
 
         string classe    = LireValeur(json, "classe");
+        string sousClasse = LireValeur(json, "sousClasse");
         string ennemNom  = LireValeur(json, "ennemiNom");
         int joueurPV     = int.Parse(LireValeur(json, "pvActuels"));
         int joueurPVMax  = int.Parse(LireValeur(json, "pvMax"));
@@ -45,7 +46,7 @@ public class CPHInline
         }
         else
         {
-            int soinRoll = RollSoin(classe, rng);
+            int soinRoll = RollSoin(classe, sousClasse, rng);
             int nouveauPV = Math.Min(joueurPV + soinRoll, joueurPVMax);
             int soinsEffectifs = nouveauPV - joueurPV;
             json = ModifierValeur(json, "pvActuels", nouveauPV.ToString(), false);
@@ -89,8 +90,9 @@ public class CPHInline
         return true;
     }
 
-    private int RollSoin(string classe, Random rng)
+    private int RollSoin(string classe, string sousClasse, Random rng)
     {
+        if (sousClasse == "Patch-Mélodique") return rng.Next(1, 9) + 3; // 1d8+3
         switch (classe)
         {
             case "Hexadécimeur":    return rng.Next(1, 5);         // 1d4

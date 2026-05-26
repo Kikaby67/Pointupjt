@@ -1,0 +1,84 @@
+{
+  "Hexadécimeur_pvBase": 25,
+  "Hexadécimeur_caBase": 14,
+  "Hexadécimeur_manaBase": 5,
+  "Hexadécimeur_charisme": 8,
+  "Hexadécimeur_typeArme": "Épée",
+  "Hexadécimeur_degatsMax": 8,
+  "Hexadécimeur_nbDes": 1,
+  "Hexadécimeur_soinMax": 4,
+  "Hexadécimeur_soinBonus": 0,
+
+  "Cryptolame_pvBase": 16,
+  "Cryptolame_caBase": 13,
+  "Cryptolame_manaBase": 5,
+  "Cryptolame_charisme": 11,
+  "Cryptolame_typeArme": "Dual-Dagues",
+  "Cryptolame_degatsMax": 6,
+  "Cryptolame_nbDes": 1,
+  "Cryptolame_nbAttaques": 2,
+  "Cryptolame_soinMax": 4,
+  "Cryptolame_soinBonus": 0,
+
+  "Hackmancien_pvBase": 14,
+  "Hackmancien_caBase": 10,
+  "Hackmancien_manaBase": 30,
+  "Hackmancien_charisme": 10,
+  "Hackmancien_typeArme": "Bâton-Magique",
+  "Hackmancien_degatsMax": 12,
+  "Hackmancien_nbDes": 1,
+  "Hackmancien_soinMax": 6,
+  "Hackmancien_soinBonus": 0,
+
+  "Firewaller_pvBase": 22,
+  "Firewaller_caBase": 15,
+  "Firewaller_manaBase": 25,
+  "Firewaller_charisme": 13,
+  "Firewaller_typeArme": "Marteau-Rune",
+  "Firewaller_degatsMax": 8,
+  "Firewaller_nbDes": 1,
+  "Firewaller_soinMax": 8,
+  "Firewaller_soinBonus": 3,
+
+  "Algorythmancien_pvBase": 16,
+  "Algorythmancien_caBase": 11,
+  "Algorythmancien_manaBase": 20,
+  "Algorythmancien_charisme": 16,
+  "Algorythmancien_typeArme": "Luth-Code",
+  "Algorythmancien_degatsMax": 8,
+  "Algorythmancien_nbDes": 1,
+  "Algorythmancien_soinMax": 6,
+  "Algorythmancien_soinBonus": 0,
+
+  "Bloc-Hex_pvMaxBonus": 8,
+
+  "Surcharge_caModif": -2,
+  "Surcharge_degatsMax": 8,
+  "Surcharge_nbDes": 1,
+  "Surcharge_nbAttaques": 2,
+
+  "Byte-Fantôme_degatsMax": 6,
+  "Byte-Fantôme_nbDes": 1,
+  "Byte-Fantôme_nbAttaques": 3,
+
+  "Pointeur-Null_typeArme": "Arc",
+  "Pointeur-Null_degatsMax": 10,
+  "Pointeur-Null_nbDes": 1,
+  "Pointeur-Null_nbAttaques": 1,
+
+  "Faille-Zéro_degatsMax": 8,
+  "Faille-Zéro_nbDes": 2,
+
+  "Compilateur_buffAttaque": 2,
+
+  "Protocole-Sacré_auraDefense": 1,
+
+  "Serment-Binaire_degatsMax": 8,
+  "Serment-Binaire_nbDes": 2,
+
+  "Barde-Binaire_degatsMax": 10,
+  "Barde-Binaire_nbDes": 1,
+
+  "Patch-Mélodique_soinMax": 8,
+  "Patch-Mélodique_soinBonus": 3
+}

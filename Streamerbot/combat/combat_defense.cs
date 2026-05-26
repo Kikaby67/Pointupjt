@@ -4,6 +4,7 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
 
     public bool Execute()
     {
@@ -74,21 +75,10 @@ public class CPHInline
 
     private int[] GetEnnemiStats(string nom)
     {
-        switch (nom)
-        {
-            case "Insecte-Bug":           return new int[] { 8,  4 };
-            case "Corbeau-Daemon":        return new int[] { 14, 6 };
-            case "Castor-Rootkit":        return new int[] { 16, 6 };
-            case "Loup-Firewall":         return new int[] { 15, 8 };
-            case "Martre-Trojan":      return new int[] { 12, 6 };
-            case "Sentinelle du Castor":  return new int[] { 14, 6 };
-            case "Ombre de la mémoire":   return new int[] { 11, 8 };
-            case "Drone-racine":          return new int[] { 10, 4 };
-            case "Parasite de données":   return new int[] { 12, 4 };
-            case "Sanglier-Crash":        return new int[] { 9,  8 };
-            case "Taupe-Malware":         return new int[] { 13, 6 };
-            default:                      return new int[] { 12, 6 };
-        }
+        string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
+        int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
+        int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
+        return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
     }
 
     private string AjouterValeur(string json, string cle, int montant)

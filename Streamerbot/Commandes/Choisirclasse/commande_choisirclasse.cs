@@ -4,6 +4,7 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
 
     public bool Execute()
     {
@@ -31,63 +32,29 @@ public class CPHInline
             return true;
         }
 
-        // ── Stats de base par classe ──────────────────────────
-        string classeNom, typeArme;
-        int pvBase, caBase, manaBase, charismeBase;
-
+        // ── Normalisation du nom de classe ────────────────────
+        string classeNom;
         switch (rawInput)
         {
             case "hexadécimeur":
-            case "hexadecimeur":
-                classeNom    = "Hexadécimeur";
-                pvBase       = 25;
-                caBase       = 14;
-                manaBase     = 5;
-                charismeBase = 8;
-                typeArme     = "Épée";
-                break;
-
-            case "cryptolame":
-                classeNom    = "Cryptolame";
-                pvBase       = 16;
-                caBase       = 13;
-                manaBase     = 5;
-                charismeBase = 11;
-                typeArme     = "Double-Dagues";
-                break;
-
-            case "hackmancien":
-                classeNom    = "Hackmancien";
-                pvBase       = 14;
-                caBase       = 10;
-                manaBase     = 30;
-                charismeBase = 10;
-                typeArme     = "Bâton-Magique";
-                break;
-
-            case "firewaller":
-                classeNom    = "Firewaller";
-                pvBase       = 22;
-                caBase       = 15;
-                manaBase     = 25;
-                charismeBase = 13;
-                typeArme     = "Marteau-Rune";
-                break;
-
-            case "algorythmancien":
-                classeNom    = "Algorythmancien";
-                pvBase       = 16;
-                caBase       = 11;
-                manaBase     = 20;
-                charismeBase = 16;
-                typeArme     = "Luth";
-                break;
-
+            case "hexadecimeur":    classeNom = "Hexadécimeur";    break;
+            case "cryptolame":      classeNom = "Cryptolame";      break;
+            case "hackmancien":     classeNom = "Hackmancien";     break;
+            case "firewaller":      classeNom = "Firewaller";      break;
+            case "algorythmancien": classeNom = "Algorythmancien"; break;
             default:
                 CPH.SendMessage(nomJoueur + ", classe inconnue ! Choisis parmi : " +
                     "Hexadécimeur · Cryptolame · Hackmancien · Firewaller · Algorythmancien");
                 return true;
         }
+
+        // ── Chargement des stats depuis la config ─────────────
+        string cfg       = File.ReadAllText(CONFIG_CLASSES);
+        int pvBase       = int.Parse(LireValeur(cfg, classeNom + "_pvBase"));
+        int caBase       = int.Parse(LireValeur(cfg, classeNom + "_caBase"));
+        int manaBase     = int.Parse(LireValeur(cfg, classeNom + "_manaBase"));
+        int charismeBase = int.Parse(LireValeur(cfg, classeNom + "_charisme"));
+        string typeArme  = LireValeur(cfg, classeNom + "_typeArme");
 
         // ── Jets de dés ───────────────────────────────────────
         Random rng = new Random();

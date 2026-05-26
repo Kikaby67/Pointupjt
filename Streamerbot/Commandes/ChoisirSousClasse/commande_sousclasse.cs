@@ -4,6 +4,7 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
 
     public bool Execute()
     {
@@ -73,44 +74,34 @@ public class CPHInline
 
     private string AppliquerBonusSousClasse(ref string json, string sousClasse)
     {
+        string cfg   = File.ReadAllText(CONFIG_CLASSES);
+        int pvBonus  = int.Parse(LireValeur(cfg, sousClasse + "_pvMaxBonus"));
+        int caModif  = int.Parse(LireValeur(cfg, sousClasse + "_caModif"));
+        string arme  = LireValeur(cfg, sousClasse + "_typeArme");
+
+        if (pvBonus != 0)
+        {
+            json = AjouterValeur(json, "pvMax", pvBonus);
+            json = AjouterValeur(json, "pvActuels", pvBonus);
+        }
+        if (caModif != 0)
+            json = AjouterValeur(json, "classeArmure", caModif);
+        if (arme != "0" && arme != "")
+            json = ModifierValeur(json, "typeArme", arme, true);
+
         switch (sousClasse)
         {
-            case "Bloc-Hex":
-                json = AjouterValeur(json, "pvMax", 8);
-                json = AjouterValeur(json, "pvActuels", 8);
-                return "+8 PV max — tu es un monolithe de métal !";
-
-            case "Surcharge":
-                json = AjouterValeur(json, "classeArmure", -2);
-                return "-2 CA mais 2 attaques par tour — attaque sans retenue !";
-
-            case "Byte-Fantôme":
-                return "3 attaques par tour — frappe comme une ombre !";
-
-            case "Pointeur-Null":
-                json = ModifierValeur(json, "typeArme", "Arc", true);
-                return "typeArme = Arc, 1d10 dégâts — vise juste !";
-
-            case "Faille-Zéro":
-                return "1d12 dégâts — tu exploites la faille ultime du système !";
-
-            case "Compilateur":
-                return "Buff un allié +2 attaque — assemble la force collective !";
-
-            case "Protocole-Sacré":
-                return "Aura protectrice pour tes alliés — sois leur rempart !";
-
-            case "Serment-Binaire":
-                return "Smite +1d8 bonus en combat — jure sur le code !";
-
-            case "Barde-Binaire":
-                return "1d8 dégâts et buff TOUS les alliés — la musique du réseau !";
-
-            case "Patch-Mélodique":
-                return "Soin 1d8+3 — ta fréquence corrige toutes les blessures !";
-
-            default:
-                return "";
+            case "Bloc-Hex":        return "+" + pvBonus + " PV max — tu es un monolithe de métal !";
+            case "Surcharge":       return caModif + " CA, 2 attaques par tour — attaque sans retenue !";
+            case "Byte-Fantôme":    return "3 attaques par tour — frappe comme une ombre !";
+            case "Pointeur-Null":   return "Arme → " + arme + ", 1d10 dégâts — vise juste !";
+            case "Faille-Zéro":     return "2d8 dégâts — tu exploites la faille ultime du système !";
+            case "Compilateur":     return "Buff un allié +2 attaque — assemble la force collective !";
+            case "Protocole-Sacré": return "Aura protectrice pour tes alliés — sois leur rempart !";
+            case "Serment-Binaire": return "Smite +1d8 en combat — jure sur le code !";
+            case "Barde-Binaire":   return "1d10 dégâts et buff TOUS les alliés — la musique du réseau !";
+            case "Patch-Mélodique": return "Soin 1d8+3 — ta fréquence corrige toutes les blessures !";
+            default:                return "";
         }
     }
 
@@ -135,7 +126,7 @@ public class CPHInline
             case "Cryptolame":      return "Byte-Fantôme (3 attaques) · Pointeur-Null (1d10/Arc)";
             case "Hackmancien":     return "Faille-Zéro (1d12) · Compilateur (buff allié)";
             case "Firewaller":      return "Protocole-Sacré (aura) · Serment-Binaire (Smite +1d8)";
-            case "Algorythmancien": return "Barde-Binaire (1d8/buff tous) · Patch-Mélodique (soin 1d8+3)";
+            case "Algorythmancien": return "Barde-Binaire (1d10/buff tous) · Patch-Mélodique (soin 1d8+3)";
             default:                return "aucune option disponible";
         }
     }

@@ -4,6 +4,8 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
+    private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
 
     public bool Execute()
     {
@@ -47,75 +49,41 @@ public class CPHInline
         string msgAttaque;
         int totalDegats = 0;
 
-        if (sousClasse == "Byte-Fantôme")
+        string cfgCls = File.ReadAllText(CONFIG_CLASSES);
+        int nbAtq     = (sousClasse != "") ? int.Parse(LireValeur(cfgCls, sousClasse + "_nbAttaques")) : 0;
+        if (nbAtq    == 0) nbAtq = int.Parse(LireValeur(cfgCls, classe + "_nbAttaques"));
+        if (nbAtq    == 0) nbAtq = 1;
+
+        if (nbAtq > 1)
         {
-            // Cryptolame Byte-Fantôme : 3 attaques à 1d6
-            int d20A = rng.Next(1, 21); bool hA = (d20A + bonusTotal) >= ennemCA;
-            int d20B = rng.Next(1, 21); bool hB = (d20B + bonusTotal) >= ennemCA;
-            int d20C = rng.Next(1, 21); bool hC = (d20C + bonusTotal) >= ennemCA;
-            int dA = hA ? rng.Next(1, 7) : 0;
-            int dB = hB ? rng.Next(1, 7) : 0;
-            int dC = hC ? rng.Next(1, 7) : 0;
-            totalDegats = dA + dB + dC;
-            string r1 = hA ? "touché -" + dA : "raté";
-            string r2 = hB ? "touché -" + dB : "raté";
-            string r3 = hC ? "touché -" + dC : "raté";
-            msgAttaque = nomJoueur + " frappe x3 (Byte-Fantôme) → [" + r1 + "] [" + r2 + "] [" + r3 + "] = -" + totalDegats + " PV à " + ennemNom;
-        }
-        else if (sousClasse == "Surcharge")
-        {
-            // Hexadécimeur Surcharge : 2 attaques à 1d8
-            int d20A = rng.Next(1, 21); bool hA = (d20A + bonusTotal) >= ennemCA;
-            int d20B = rng.Next(1, 21); bool hB = (d20B + bonusTotal) >= ennemCA;
-            int dA = hA ? rng.Next(1, 9) : 0;
-            int dB = hB ? rng.Next(1, 9) : 0;
-            totalDegats = dA + dB;
-            string r1 = hA ? "touché -" + dA : "raté";
-            string r2 = hB ? "touché -" + dB : "raté";
-            msgAttaque = nomJoueur + " frappe x2 (Surcharge) → [" + r1 + "] [" + r2 + "] = -" + totalDegats + " PV à " + ennemNom;
-        }
-        else if (classe == "Cryptolame")
-        {
-            if (sousClasse == "Pointeur-Null")
+            string[] res = new string[nbAtq];
+            for (int i = 0; i < nbAtq; i++)
             {
-                // Pointeur-Null : 1 attaque 1d10
                 int d20 = rng.Next(1, 21);
-                int roll = d20 + bonusTotal;
-                bool touche = roll >= ennemCA;
-                if (touche)
+                if ((d20 + bonusTotal) >= ennemCA)
                 {
-                    totalDegats = rng.Next(1, 11);
-                    msgAttaque = nomJoueur + " tire (Pointeur-Null) sur " + ennemNom + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → TOUCHÉ ! -" + totalDegats + " PV";
+                    int d = RollDegats(classe, sousClasse, rng);
+                    totalDegats += d;
+                    res[i] = "touché -" + d;
                 }
                 else
                 {
-                    msgAttaque = nomJoueur + " tire (Pointeur-Null) sur " + ennemNom + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → RATÉ !";
+                    res[i] = "raté";
                 }
             }
-            else
-            {
-                // Cryptolame base : 2 attaques à 1d6
-                int d20A = rng.Next(1, 21); bool hA = (d20A + bonusTotal) >= ennemCA;
-                int d20B = rng.Next(1, 21); bool hB = (d20B + bonusTotal) >= ennemCA;
-                int dA = hA ? rng.Next(1, 7) : 0;
-                int dB = hB ? rng.Next(1, 7) : 0;
-                totalDegats = dA + dB;
-                string r1 = hA ? "touché -" + dA : "raté";
-                string r2 = hB ? "touché -" + dB : "raté";
-                msgAttaque = nomJoueur + " frappe x2 → [" + r1 + "] [" + r2 + "] = -" + totalDegats + " PV à " + ennemNom;
-            }
+            string label = (sousClasse != "") ? sousClasse : classe;
+            string resStr = "[" + string.Join("] [", res) + "]";
+            msgAttaque = nomJoueur + " frappe x" + nbAtq + " (" + label + ") → " + resStr + " = -" + totalDegats + " PV à " + ennemNom;
         }
         else
         {
-            // Attaque standard (toutes les autres classes + sous-classes)
-            int d20 = rng.Next(1, 21);
+            int d20  = rng.Next(1, 21);
             int roll = d20 + bonusTotal;
             bool touche = roll >= ennemCA;
             if (touche)
             {
                 totalDegats = RollDegats(classe, sousClasse, rng);
-                string label = (sousClasse == "Serment-Binaire") ? " (Smite +1d8 inclus)" : "";
-                msgAttaque = nomJoueur + " attaque " + ennemNom + label + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → TOUCHÉ ! -" + totalDegats + " PV";
+                msgAttaque = nomJoueur + " attaque " + ennemNom + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → TOUCHÉ ! -" + totalDegats + " PV";
             }
             else
             {
@@ -182,55 +150,32 @@ public class CPHInline
 
     private int RollDegats(string classe, string sousClasse, Random rng)
     {
-        if (sousClasse == "Faille-Zéro")     return rng.Next(1, 9) + rng.Next(1, 9);  // 2d8
-        if (sousClasse == "Barde-Binaire")   return rng.Next(1, 11);                   // 1d10
-        if (sousClasse == "Serment-Binaire") return rng.Next(1, 9) + rng.Next(1, 9);  // 1d8 + Smite 1d8
-        switch (classe)
-        {
-            case "Hexadécimeur":    return rng.Next(1, 9);   // 1d8
-            case "Hackmancien":     return rng.Next(1, 13);  // 1d12
-            case "Firewaller":      return rng.Next(1, 9);   // 1d8
-            case "Algorythmancien": return rng.Next(1, 9);   // 1d8
-            default:                return rng.Next(1, 9);   // 1d8
-        }
+        string cfg = File.ReadAllText(CONFIG_CLASSES);
+        string key = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "0"
+                     ? sousClasse : classe;
+        int degatsMax = int.Parse(LireValeur(cfg, key + "_degatsMax"));
+        int nbDes     = int.Parse(LireValeur(cfg, key + "_nbDes"));
+        if (degatsMax == 0) degatsMax = 8;
+        if (nbDes     == 0) nbDes     = 1;
+        int total = 0;
+        for (int i = 0; i < nbDes; i++) total += rng.Next(1, degatsMax + 1);
+        return total;
     }
 
     private int[] GetEnnemiStats(string nom)
     {
-        switch (nom)
-        {
-            case "Insecte-Bug":           return new int[] { 8,  4 };
-            case "Corbeau-Daemon":        return new int[] { 14, 6 };
-            case "Castor-Rootkit":        return new int[] { 16, 6 };
-            case "Loup-Firewall":         return new int[] { 15, 8 };
-            case "Martre-Trojan":      return new int[] { 12, 6 };
-            case "Sentinelle du Castor":  return new int[] { 14, 6 };
-            case "Ombre de la mémoire":   return new int[] { 11, 8 };
-            case "Drone-racine":          return new int[] { 10, 4 };
-            case "Parasite de données":   return new int[] { 12, 4 };
-            case "Sanglier-Crash":        return new int[] { 9,  8 };
-            case "Taupe-Malware":         return new int[] { 13, 6 };
-            default:                      return new int[] { 12, 6 };
-        }
+        string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
+        int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
+        int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
+        return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
     }
 
     private int[] GetRecompensesEnnemi(string nom)
     {
-        switch (nom)
-        {
-            case "Insecte-Bug":           return new int[] { 10, 2  };
-            case "Corbeau-Daemon":        return new int[] { 25, 5  };
-            case "Castor-Rootkit":        return new int[] { 40, 8  };
-            case "Loup-Firewall":         return new int[] { 60, 12 };
-            case "Martre-Trojan":      return new int[] { 20, 4  };
-            case "Sentinelle du Castor":  return new int[] { 30, 6  };
-            case "Ombre de la mémoire":   return new int[] { 25, 5  };
-            case "Drone-racine":          return new int[] { 15, 3  };
-            case "Parasite de données":   return new int[] { 18, 4  };
-            case "Sanglier-Crash":        return new int[] { 22, 5  };
-            case "Taupe-Malware":         return new int[] { 20, 4  };
-            default:                      return new int[] { 15, 3  };
-        }
+        string cfg = File.ReadAllText(CONFIG_ENNEMIS);
+        int xp  = int.Parse(LireValeur(cfg, nom + "_xp"));
+        int ram = int.Parse(LireValeur(cfg, nom + "_ram"));
+        return new int[] { xp != 0 ? xp : 15, ram != 0 ? ram : 3 };
     }
 
     private string LireValeur(string json, string cle)

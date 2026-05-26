@@ -24,6 +24,13 @@ Pointu-PJT/
 ├── Streamerbot/                 # Fichiers C# collés dans Streamer.bot
 │   ├── Bonjour/
 │   ├── Rejoindre/
+│   ├── Commandes/
+│   │   ├── Profil/
+│   │   ├── Choisirclasse/
+│   │   ├── ChoisirSousClasse/
+│   │   ├── InfoClasses/         # !hexadécimeur, !cryptolame, etc.
+│   │   ├── Repos/               # !repos
+│   │   └── Arbonet/             # !arbonet
 │   ├── quetes/
 │   │   ├── quest_system.cs      # !quete (lancer / consulter)
 │   │   └── quest_timer.cs       # Timer QuestCheck (30s, auto-résolution + rencontres)
@@ -32,10 +39,15 @@ Pointu-PJT/
 │   │   ├── combat_soin.cs       # !soin
 │   │   ├── combat_defense.cs    # !defense
 │   │   └── combat_fuir.cs       # !fuir
-│   └── Timer_Xp/
-│       └── Timer_XP_visionnage.cs
+│   ├── Timer_Xp/
+│   │   └── Timer_XP_visionnage.cs
+│   └── Reward/
+│       ├── Jet de dé/           # 1d6_PV.cs, 1d4_CA.cs
+│       └── Bonus +2/            # +2_PV.cs, +2_CA.cs, +2_Attaque.cs
 ├── Donnees/
 │   ├── joueurs/                 # Un .json par joueur (ex: kikabygaming.json)
+│   ├── config_classes.json      # ★ Source unique : stats classes + sous-classes
+│   ├── config_ennemis.json      # ★ Source unique : stats tous les ennemis
 │   └── etat_global.json         # Rencontre manuelle active (streamer)
 ├── Lore/
 │   ├── LA_LEGENDE_DE_POINTU_V2.md
@@ -77,7 +89,6 @@ dotnet run
 ### Les 3 méthodes utilitaires (copier dans CHAQUE fichier)
 
 ```csharp
-// Lit une valeur dans le JSON — retourne "0" si clé introuvable
 private string LireValeur(string json, string cle)
 {
     string marqueur = "\"" + cle + "\": ";
@@ -88,9 +99,6 @@ private string LireValeur(string json, string cle)
     return json.Substring(posDebut, posFin - posDebut).Trim().Trim('"');
 }
 
-// Remplace une valeur dans le JSON
-// estTexte = true  → "Firewaller" (avec guillemets)
-// estTexte = false → 10 / true / false (sans guillemets)
 private string ModifierValeur(string json, string cle, string val, bool estTexte)
 {
     string marqueur = "\"" + cle + "\": ";
@@ -103,7 +111,6 @@ private string ModifierValeur(string json, string cle, string val, bool estTexte
     return json.Substring(0, posDebut) + nouvelle + json.Substring(posDebut + ancienne.Length);
 }
 
-// Lit un entier et ajoute un montant
 private string AjouterValeur(string json, string cle, int montant)
 {
     int val = int.Parse(LireValeur(json, cle));
@@ -116,6 +123,58 @@ private string AjouterValeur(string json, string cle, int montant)
 estTexte = false → nombres (ram, pvMax, experience...)
                  → booléens (true, false)
 estTexte = true  → chaînes de texte (classe, queteId, ennemiNom...)
+```
+
+---
+
+## Architecture config — Source unique de vérité
+
+Toutes les stats de classe, sous-classe et ennemi vivent dans **deux fichiers JSON**.
+Le code ne contient aucun `switch (classe)` ni `if (sousClasse == "X")` pour les valeurs numériques.
+Pour rééquilibrer : modifier le JSON uniquement.
+
+### `config_classes.json`
+
+Clés format plat : `"NomClasse_stat": valeur`
+
+**Stats de classe** (utilisées à la création + combat) :
+```
+_pvBase, _caBase, _manaBase, _charisme, _typeArme
+_degatsMax, _nbDes          ← dés de dégâts en combat
+_nbAttaques                 ← nombre d'attaques (si > 1 → multi-attaque)
+_soinMax, _soinBonus        ← dés de soin (!soin)
+```
+
+**Stats de sous-classe** (deux catégories) :
+
+*Bonus de sélection* — appliqués UNE FOIS à la sélection, stockés dans le JSON joueur :
+```
+_pvMaxBonus   ← ajout permanent à pvMax et pvActuels
+_caModif      ← modificateur permanent de classeArmure (peut être négatif)
+_typeArme     ← remplacement de l'arme
+```
+
+*Comportements combat* — lus à l'exécution, affecter le config change tous les joueurs actifs :
+```
+_degatsMax, _nbDes, _nbAttaques   ← dégâts et nombre d'attaques
+_soinMax, _soinBonus              ← soin (Patch-Mélodique)
+_buffAttaque                      ← buff allié (Compilateur)
+_auraDefense                      ← aura défensive (Protocole-Sacré)
+```
+
+**Pattern de lookup (sous-classe prioritaire sur classe) :**
+```csharp
+string key = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "0"
+             ? sousClasse : classe;
+```
+
+> ⚠️ `Pointeur-Null_nbAttaques: 1` est explicite pour éviter l'héritage de `Cryptolame_nbAttaques: 2`.
+
+### `config_ennemis.json`
+
+Clés format plat : `"NomEnnemi_stat": valeur`
+```
+_pv, _ca, _degatsMax, _xp, _ram
 ```
 
 ---
@@ -153,6 +212,7 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
   "queteTotalPause": 0,
   "queteCooldownFin": 0,
   "dernierCheckRencontre": 0,
+  "reposCooldownFin": 0,
   "combatActuel": {
     "ennemiNom": "",
     "ennemiPVActuels": 0,
@@ -171,9 +231,9 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
 
 > ⚠️ L'ancien format (`xp`, `sac`) est obsolète. Le champ XP s'appelle `experience`.
 >
-> Les champs combat (`ennemiNom`, `ennemiPVActuels`, `buffActif`, `tourCombat`) sont dans `combatActuel` (objet imbriqué). `LireValeur` les trouve par recherche de chaîne — ça fonctionne tant qu'ils sont uniques dans le JSON.
+> Les champs combat (`ennemiNom`, `ennemiPVActuels`, `buffActif`, `tourCombat`) sont dans `combatActuel` (objet imbriqué). `LireValeur` les trouve par recherche de chaîne.
 >
-> **Champs rencontre** (root) : `enRencontre`, `rencontreType`, `quetePauseDebut`, `queteTotalPause`, `queteCooldownFin`, `dernierCheckRencontre` — absents des anciens fichiers joueurs, à ajouter manuellement si besoin.
+> `reposCooldownFin` : absent des anciens fichiers joueurs, à ajouter manuellement (valeur 0).
 
 ---
 
@@ -188,55 +248,45 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
 ```
 
 Utilisé uniquement pour les rencontres manuelles lancées par le streamer.
-Les rencontres de quête sont gérées directement dans le JSON joueur.
 
 ---
 
 ## Les 5 classes
 
-| Classe | PV | CA | Mana | Charisme | Arme | Dé dégâts |
-|--------|----|----|------|---------|------|-----------|
-| Hexadécimeur | 25 | 14 | 5 | 8 | Épée | 1d8 |
-| Cryptolame | 16 | 13 | 5 | 11 | Dual-Dagues | 1d6+1d6 (2 attaques) |
-| Hackmancien | 14 | 10 | 30 | 10 | Bâton-Magique | 1d12 |
-| Firewaller | 22 | 15 | 25 | 13 | Marteau-Rune | 1d8 |
-| Algorythmancien | 16 | 11 | 20 | 16 | Luth-Code | 1d8 |
+| Classe | PV | CA | Mana | Charisme | Arme | Dégâts | Soin |
+|--------|----|----|------|---------|------|--------|------|
+| Hexadécimeur | 25 | 14 | 5 | 8 | Épée | 1d8 | 1d4 |
+| Cryptolame | 16 | 13 | 5 | 11 | Dual-Dagues | 1d6 ×2 att. | 1d4 |
+| Hackmancien | 14 | 10 | 30 | 10 | Bâton-Magique | 1d12 | 1d6 |
+| Firewaller | 22 | 15 | 25 | 13 | Marteau-Rune | 1d8 | 1d8+3 |
+| Algorythmancien | 16 | 11 | 20 | 16 | Luth-Code | 1d8 | 1d6 |
 
 > ⚠️ Le nom exact en code est `"Algorythmancien"` (pas `"Algorythmien"`).
+
+Toutes ces valeurs sont dans `config_classes.json`. Le code ne les duplique pas.
 
 **Jets de création** :
 - PV final = pvBase + `rng.Next(1, 7)` (1d6 → +1 à +6)
 - CA finale = caBase + `rng.Next(1, 5)` (1d4 → +1 à +4)
 - bonusAttaque = `rng.Next(1, 5)` (1d4 → +1 à +4)
 
-```csharp
-// Bases de classe pour les Channel Point rewards
-private int[] GetClasseBase(string classe)
-{
-    // { pvBase, caBase, manaBase, charismeBase }
-    switch (classe)
-    {
-        case "Hexadécimeur":   return new int[] { 25, 14,  5,  8 };
-        case "Cryptolame":     return new int[] { 16, 13,  5, 11 };
-        case "Hackmancien":    return new int[] { 14, 10, 30, 10 };
-        case "Firewaller":     return new int[] { 22, 15, 25, 13 };
-        case "Algorythmancien":return new int[] { 16, 11, 20, 16 };
-        default:               return new int[] { 10, 10,  0,  0 };
-    }
-}
-```
-
 ---
 
-## Sous-classes (niveau 5) — À implémenter
+## Sous-classes (niveau 5) ✅
 
 | Classe | Sous-classe A | Sous-classe B |
 |--------|--------------|--------------|
 | Hexadécimeur | **Bloc-Hex** : +8 PV max | **Surcharge** : 2 attaques 1d8, -2 CA |
-| Cryptolame | **Byte-Fantôme** : 3 attaques 1d6 | **Pointeur-Null** : 1d10, typeArme="Arc" |
-| Hackmancien | **Faille-Zéro** : 2d8 | **Compilateur** : buff UN allié +2 attaque |
-| Firewaller | **Protocole-Sacré** : aura -1 dégât allié | **Serment-Binaire** : Smite +1d8 |
+| Cryptolame | **Byte-Fantôme** : 3 attaques 1d6 | **Pointeur-Null** : 1d10, Arc |
+| Hackmancien | **Faille-Zéro** : 2d8 | **Compilateur** : buff allié +2 attaque |
+| Firewaller | **Protocole-Sacré** : aura défense | **Serment-Binaire** : Smite +1d8 (2d8 total) |
 | Algorythmancien | **Barde-Binaire** : 1d10 + buff TOUS | **Patch-Mélodique** : soin 1d8+3 |
+
+Toutes les valeurs sont dans `config_classes.json` (voir section Architecture config).
+
+Les **bonus de sélection** (pvMaxBonus, caModif, typeArme) sont appliqués une fois et stockés dans le JSON joueur — changer le config n'affecte pas les joueurs existants.
+
+Les **comportements combat** (degatsMax, nbAttaques, soinMax…) sont lus à l'exécution — changer le config affecte immédiatement tous les joueurs actifs.
 
 ---
 
@@ -288,10 +338,30 @@ private string AppliquerBonusNiveau(string json, int niveau)
 
 ## Ennemis
 
-### Ennemis de rencontre de quête (lancés par `quest_timer.cs`)
+Toutes les stats ennemis sont dans `config_ennemis.json`. Les méthodes de lookup lisent le fichier :
 
-| Nom | PV | CA | Dé dégâts | XP | RAM |
-|-----|----|----|-----------|-----|-----|
+```csharp
+private int[] GetEnnemiStats(string nom)
+{
+    string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
+    int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
+    int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
+    return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
+}
+
+private int[] GetRecompensesEnnemi(string nom)   // combat_attaque.cs uniquement
+{
+    string cfg = File.ReadAllText(CONFIG_ENNEMIS);
+    int xp  = int.Parse(LireValeur(cfg, nom + "_xp"));
+    int ram = int.Parse(LireValeur(cfg, nom + "_ram"));
+    return new int[] { xp != 0 ? xp : 15, ram != 0 ? ram : 3 };
+}
+```
+
+### Ennemis de rencontre de quête
+
+| Nom | PV | CA | Dégâts | XP | RAM |
+|-----|----|----|--------|-----|-----|
 | Martre-Trojan | 30 | 12 | 1d6 | 20 | 4 |
 | Sentinelle du Castor | 25 | 14 | 1d6 | 30 | 6 |
 | Ombre de la mémoire | 20 | 11 | 1d8 | 25 | 5 |
@@ -300,54 +370,14 @@ private string AppliquerBonusNiveau(string json, int niveau)
 | Sanglier-Crash | 35 | 9 | 1d8 | 22 | 5 |
 | Taupe-Malware | 22 | 13 | 1d6 | 20 | 4 |
 
-### Ennemis manuels (streamer via `etat_global.json`)
+### Ennemis manuels (streamer)
 
-| Nom | PV | CA | Dé dégâts | XP | RAM |
-|-----|----|----|-----------|-----|-----|
-| Insecte-Bug | — | 8 | 1d4 | 10 | 2 |
-| Corbeau-Daemon | — | 14 | 1d6 | 25 | 5 |
-| Castor-Rootkit | — | 16 | 1d6 | 40 | 8 |
-| Loup-Firewall | — | 15 | 1d8 | 60 | 12 |
-
-### Méthodes de lookup dans les fichiers combat
-
-```csharp
-// { classeArmure, desDegats } — utilisé dans tous les fichiers combat
-private int[] GetEnnemiStats(string nom)
-{
-    switch (nom)
-    {
-        case "Insecte-Bug":           return new int[] { 8,  4 };
-        case "Corbeau-Daemon":        return new int[] { 14, 6 };
-        case "Castor-Rootkit":        return new int[] { 16, 6 };
-        case "Loup-Firewall":         return new int[] { 15, 8 };
-        case "Martre-Trojan":      return new int[] { 12, 6 };
-        case "Sentinelle du Castor":  return new int[] { 14, 6 };
-        case "Ombre de la mémoire":   return new int[] { 11, 8 };
-        case "Drone-racine":          return new int[] { 10, 4 };
-        case "Parasite de données":   return new int[] { 12, 4 };
-        default:                      return new int[] { 12, 6 };
-    }
-}
-
-// { xpRecompense, ramRecompense } — utilisé dans combat_attaque.cs uniquement
-private int[] GetRecompensesEnnemi(string nom)
-{
-    switch (nom)
-    {
-        case "Insecte-Bug":           return new int[] { 10, 2  };
-        case "Corbeau-Daemon":        return new int[] { 25, 5  };
-        case "Castor-Rootkit":        return new int[] { 40, 8  };
-        case "Loup-Firewall":         return new int[] { 60, 12 };
-        case "Martre-Trojan":      return new int[] { 20, 4  };
-        case "Sentinelle du Castor":  return new int[] { 30, 6  };
-        case "Ombre de la mémoire":   return new int[] { 25, 5  };
-        case "Drone-racine":          return new int[] { 15, 3  };
-        case "Parasite de données":   return new int[] { 18, 4  };
-        default:                      return new int[] { 15, 3  };
-    }
-}
-```
+| Nom | CA | Dégâts | XP | RAM |
+|-----|-----|--------|-----|-----|
+| Insecte-Bug | 8 | 1d4 | 10 | 2 |
+| Corbeau-Daemon | 14 | 1d6 | 25 | 5 |
+| Castor-Rootkit | 16 | 1d6 | 40 | 8 |
+| Loup-Firewall | 15 | 1d8 | 60 | 12 |
 
 ---
 
@@ -360,7 +390,7 @@ Trigger : Command Triggered → !bonjour
 ```
 
 ### `!rejoindre` → `Commande_Rejoindre.cs`
-Crée le JSON joueur avec tous les champs (y compris les champs rencontre). Indique `!choisirclasse`.
+Crée le JSON joueur avec tous les champs (y compris `reposCooldownFin`). Indique `!choisirclasse`.
 ```
 Trigger : Command Triggered → !rejoindre
 ```
@@ -376,10 +406,32 @@ Trigger : Command Triggered → !profil
 ```
 
 ### `!choisirclasse [nom]` → `Commande_ChoisirClasse.cs`
-Initialise les stats + jets de dés. Bloque si classe déjà choisie.
+Lit les stats depuis `config_classes.json`. Jets de dés à la création.
 `args["rawInput"]` contient le nom de la classe en minuscules.
 ```
 Trigger : Command Triggered → !choisirclasse
+```
+
+### `!sousclasse [nom]` → `commande_sousclasse.cs`
+Disponible si `niveau >= 5` et `sousClasseChoisie = false`.
+Lit les bonus depuis `config_classes.json` : `_pvMaxBonus`, `_caModif`, `_typeArme`.
+Met `sousClasseChoisie = true`.
+```
+Trigger : Command Triggered → !sousclasse
+```
+
+### `!repos` → `Commandes/Repos/commande_repos.cs`
+Restauration complète hors combat + hors quête.
+- Restaure `pvActuels = pvMax` et `manaActuels = manaMax`
+- Cooldown 30 minutes via `reposCooldownFin` (timestamp Unix)
+```
+Trigger : Command Triggered → !repos
+```
+
+### `!arbonet` → `Commandes/Arbonet/commande_arbonet.cs`
+Affiche le synopsis du lore d'Arbonet en 4 messages. Termine par `!rejoindre`.
+```
+Trigger : Command Triggered → !arbonet
 ```
 
 ### `!quete` → `quetes/quest_system.cs`
@@ -393,7 +445,7 @@ Système basé sur timestamps Unix — **pas de `CPH.Wait()`**.
    - Sinon : calcule `secondesEcoulees = (maintenant - queteDernierTick) - queteTotalPause`, si terminé → résoudre (80% succès)
 4. Sinon : choisit une quête aléatoire, initialise tous les champs, `CPH.EnableTimer("QuestCheck")`
 
-**Quêtes** (`GetQueteData`) — Format `{ description, ticks, xp, ram }` :
+**Quêtes** — Format `{ description, ticks, xp, ram }` :
 ```
 artefact_01 : 6 ticks (30 min) → 100 XP · 10 Ram
 artefact_02 : 5 ticks (25 min) → 80 XP  · 8 Ram
@@ -417,50 +469,47 @@ Trigger : Command Triggered → !quete
 ### `quest_timer.cs` — Timer QuestCheck (30s)
 Parcourt tous les fichiers joueurs. Pour chaque joueur `enQuete == true` :
 
-**CAS 1** — `enRencontre == true` et `enCombat == false` (combat terminé) :
-- `pvActuels > 0` → victoire : ajoute durée pause à `queteTotalPause`, clear rencontre, message "quête reprend"
+**CAS 1** — `enRencontre == true` et `enCombat == false` :
+- `pvActuels > 0` → victoire : reprend la quête, `quetesTerminees += 1`
 - `pvActuels <= 0` → défaite : `enQuete = false`, `queteCooldownFin = maintenant + 1200` (20 min)
 
-**CAS 2** — Check rencontre toutes les 3 min (`maintenant - dernierCheckRencontre >= 180`) :
-- 40% chance de rencontre, parmi 3 types :
-  - **Combat (1/3)** : pause quête (`quetePauseDebut`), `enCombat = true`, ennemi aléatoire → message "un X surgit"
-  - **Événement (1/3)** : 50% +XP (10-29), 50% -RAM (5-14), aucune pause
-  - **Marchand (1/3)** : soin aléatoire (5-14 PV, plafonné pvMax), aucune pause
+**CAS 2** — Check rencontre toutes les 3 min :
+- 40% chance, parmi 3 types (Combat / Événement / Marchand)
+- PV ennemi lu depuis `config_ennemis.json`
 
-**CAS 3** — Vérification fin de quête :
-- `secondesEcoulees = (maintenant - queteDernierTick) - queteTotalPause`
-- Si terminé → 80% succès (+XP +RAM) / 20% échec
-
-Désactive le timer `QuestCheck` si plus aucun joueur en quête.
+**CAS 3** — Fin de quête : 80% succès / 20% échec
 ```
 Trigger : Timed Action → QuestCheck (30s, repeat)
-Activé par : CPH.EnableTimer("QuestCheck") depuis quest_system.cs
-Désactivé par : CPH.DisableTimer("QuestCheck") si plus de quête active
 ```
 
 ### `!attaque` → `combat/combat_attaque.cs`
 Combat tour par tour — **seulement si `enCombat == true`**.
 
-- **Cryptolame** : 2 jets d20 séparés + bonusTotal vs CA ennemi → chacun fait 1d6 si touché
-- **Autres classes** : 1 jet d20 + bonusTotal vs CA ennemi → dégâts par classe si touché
-- `buffActif` ajoute +2 au bonusAttaque ce tour
-- **Victoire** (`ennemiPVActuels <= 0`) : `enCombat = false`, +XP +RAM via `GetRecompensesEnnemi`, si `enRencontre` → note que la quête reprend
-- **Riposte ennemi** : d20 vs `classeArmure` joueur → dégâts via `GetEnnemiStats[1]`
-- **Défaite** (`pvActuels <= 0`) : `enCombat = false`
+**Logique d'attaque entièrement config-driven :**
+1. Lit `_nbAttaques` depuis config (sous-classe en priorité, puis classe, défaut 1)
+2. Si `nbAttaques > 1` : loop multi-attaque, chaque coup appelle `RollDegats`
+3. Sinon : attaque unique avec `RollDegats`
+4. `RollDegats` lit `_degatsMax` et `_nbDes` depuis config (sous-classe si elle a une entrée, sinon classe)
 
 ```csharp
-private int RollDegats(string classe, Random rng)
+private int RollDegats(string classe, string sousClasse, Random rng)
 {
-    switch (classe)
-    {
-        case "Hexadécimeur":    return rng.Next(1, 9);   // 1d8
-        case "Hackmancien":     return rng.Next(1, 13);  // 1d12
-        case "Firewaller":      return rng.Next(1, 9);   // 1d8
-        case "Algorythmancien": return rng.Next(1, 9);   // 1d8
-        default:                return rng.Next(1, 9);   // 1d8
-    }
+    string cfg = File.ReadAllText(CONFIG_CLASSES);
+    string key = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "0"
+                 ? sousClasse : classe;
+    int degatsMax = int.Parse(LireValeur(cfg, key + "_degatsMax"));
+    int nbDes     = int.Parse(LireValeur(cfg, key + "_nbDes"));
+    if (degatsMax == 0) degatsMax = 8;
+    if (nbDes     == 0) nbDes     = 1;
+    int total = 0;
+    for (int i = 0; i < nbDes; i++) total += rng.Next(1, degatsMax + 1);
+    return total;
 }
 ```
+
+- `buffActif` ajoute +2 au bonusAttaque ce tour
+- Victoire : `combatsGagnes += 1`, +XP +RAM depuis config_ennemis
+- Défaite : `combatsPerdus += 1`
 ```
 Trigger : Command Triggered → !attaque
 ```
@@ -468,9 +517,21 @@ Trigger : Command Triggered → !attaque
 ### `!soin` → `combat/combat_soin.cs`
 Soin pendant le combat — coûte 5 mana.
 - Si `manaActuels < 5` : soin échoue mais l'ennemi riposte quand même
-- Soin par classe : Hexadécimeur/Cryptolame 1d4 · Hackmancien/Algorythmancien 1d6 · Firewaller 1d8+3
+- `RollSoin` lit `_soinMax` et `_soinBonus` depuis config (sous-classe si elle en a, sinon classe)
 - Soin plafonné à `pvMax`
-- L'ennemi riposte toujours après (que le soin réussisse ou non)
+- L'ennemi riposte toujours après
+
+```csharp
+private int RollSoin(string classe, string sousClasse, Random rng)
+{
+    string cfg    = File.ReadAllText(CONFIG_CLASSES);
+    string key    = (sousClasse != "" && LireValeur(cfg, sousClasse + "_soinMax") != "0") ? sousClasse : classe;
+    int soinMax   = int.Parse(LireValeur(cfg, key + "_soinMax"));
+    int soinBonus = int.Parse(LireValeur(cfg, key + "_soinBonus"));
+    if (soinMax == 0) soinMax = 4;
+    return rng.Next(1, soinMax + 1) + soinBonus;
+}
+```
 ```
 Trigger : Command Triggered → !soin
 ```
@@ -486,8 +547,8 @@ Trigger : Command Triggered → !defense
 ### `!fuir` → `combat/combat_fuir.cs`
 Tentative de fuite du combat.
 - Seuil : **Cryptolame** d20 ≥ 8 · **Autres** d20 ≥ 12
-- **Fuite réussie** : `enCombat = false` · si `enRencontre == true` → calcule pause, met à jour `queteTotalPause`, clear rencontre → quête reprend
-- **Fuite échouée** : l'ennemi riposte (d20 vs CA) · si `pvActuels <= 0` → défaite
+- **Fuite réussie** : `enCombat = false` · si `enRencontre == true` → quête reprend
+- **Fuite échouée** : l'ennemi riposte · si `pvActuels <= 0` → `combatsPerdus += 1`
 ```
 Trigger : Command Triggered → !fuir
 ```
@@ -496,67 +557,58 @@ Trigger : Command Triggered → !fuir
 
 | Fichier | Reward Twitch | Coût | Logique |
 |---------|--------------|------|---------|
-| `RewardChaine_JetDe_PV.cs` | 🎲 Jet de dé — PV | 2 000 | pvMax = baseClasse[PV] + 1d6 |
-| `RewardChaine_JetDe_CA.cs` | 🎲 Jet de dé — CA | 2 000 | CA = baseClasse[CA] + 1d6 |
-| `RewardChaine_Boost_PV.cs` | ⭐ Boost +2 — PV | 20 000 | pvMax += 2 (stack permanent) |
-| `RewardChaine_Boost_CA.cs` | ⭐ Boost +2 — CA | 20 000 | CA += 2 |
-| `RewardChaine_Boost_Attaque.cs` | ⭐ Boost +2 — Attaque | 20 000 | bonusAttaque += 2 |
+| `1d6_PV.cs` | 🎲 Jet de dé — PV | 2 000 | pvMax = pvBase (config) + 1d6 |
+| `1d4_CA.cs` | 🎲 Jet de dé — CA | 2 000 | CA = caBase (config) + 1d4 |
+| `+2_PV.cs` | ⭐ Boost +2 — PV | 20 000 | pvMax += 2 (stack permanent) |
+| `+2_CA.cs` | ⭐ Boost +2 — CA | 20 000 | CA += 2 |
+| `+2_Attaque.cs` | ⭐ Boost +2 — Attaque | 20 000 | bonusAttaque += 2 |
 
-> Message boost : `"Bravo, {nomJoueur} tu as gagné +2 dans {nomStat} !"`
-> Jet de dé : repart de la BASE classe, ne stack pas avec lui-même.
+> Jet de dé : repart de la BASE classe depuis config, ne stack pas.
 > Boost +2 : s'empile sur tout.
-
 ```
 Trigger : Channel Point Reward (un fichier par reward)
 ```
 
 ### `Timer_XP_Visionnage.cs` — Timer 15 min
-Parcourt tous les fichiers joueurs. Pour chaque joueur avec classe : +5 XP.
-Vérifie montée de niveau. Message si level up.
+Pour chaque joueur avec classe : +5 XP, vérifie montée de niveau.
+Régénération passive si `enCombat != true` : +2 PV (plafonné pvMax) + +3 Mana (plafonné manaMax).
 ```
 Trigger : Timed Action → Timer_XP_Visionnage (900s, repeat)
-Activé par : Stream Online
-Désactivé par : Stream Offline
 ```
 
 ### `Action_Rencontre.cs` — Rencontre manuelle streamer
-Le streamer clique depuis Streamer.bot UI.
-4 actions séparées (une par ennemi) avec Set Argument → `ennemi = "castor-rootkit"`.
-Met à jour `etat_global.json` + annonce dans le chat.
+4 actions séparées (une par ennemi). Met à jour `etat_global.json` + chat.
 ```
 Trigger : Manuel (bouton Streamer.bot)
 ```
 
 ---
 
-## Commandes À IMPLÉMENTER ❌
-
-### `!sousclasse [nom]` → `Commande_ChoisirSousClasse.cs`
-- Disponible uniquement si `niveau >= 5` et `sousClasseChoisie = false`
-- Applique les bonus de la sous-classe choisie
-- Met `sousClasseChoisie = true`
-
----
-
 ## Checklist pour écrire un nouveau fichier
 
 1. `using System;` + `using System.IO;` en tête
-2. `private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";`
+2. Constantes en tête :
+   ```csharp
+   private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+   private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
+   private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
+   ```
 3. Vérifier `File.Exists(cheminFichier)` en premier → message + `return true`
 4. Vérifier `classeChoisie == "true"` avant toute action de jeu
-5. Vérifier `enCombat` et `enQuete` selon la logique de la commande
-6. Toujours `File.WriteAllText(cheminFichier, json)` après modification
-7. Après modification de `experience` → vérifier `CalculerNiveau` + `AppliquerBonusNiveau`
-8. Copier les 3 méthodes utilitaires en bas du fichier
-9. Utiliser `nomJoueur.ToLower()` pour le nom du fichier
-10. Ne jamais utiliser `CPH.Wait()` dans un flux de quête — bloque Streamer.bot
+5. Vérifier `enCombat` et `enQuete` selon la logique
+6. **Ne jamais hardcoder de stats de classe/sous-classe/ennemi** → lire depuis config
+7. Toujours `File.WriteAllText(cheminFichier, json)` après modification
+8. Après modification de `experience` → vérifier `CalculerNiveau` + `AppliquerBonusNiveau`
+9. Copier les 3 méthodes utilitaires en bas du fichier
+10. Utiliser `nomJoueur.ToLower()` pour le nom du fichier
+11. Ne jamais utiliser `CPH.Wait()` dans un flux de quête — bloque Streamer.bot
 
 ---
 
 ## Discord Bot
 
 Bot Python `discord.py` déployé sur **Discloud** (plan gratuit).
-Lit les profils depuis le repo GitHub public (pas de token nécessaire).
+Lit les profils depuis le repo GitHub public.
 
 **Commandes** : `!profil`, `!arbonet`, `!aide`
 **Channel** : `CHANNEL_ID = 1490232175382102016`

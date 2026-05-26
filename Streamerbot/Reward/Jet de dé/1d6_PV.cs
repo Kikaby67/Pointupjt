@@ -4,6 +4,7 @@ using System.IO;
 public class CPHInline
 {
 	private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+	private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
 	public bool Execute()
 	{
 		// Reward point Stat PV
@@ -38,17 +39,12 @@ public class CPHInline
 		return true;
 	}
 
- 	private int[] GetClasseBase(string classe)
+	private int[] GetClasseBase(string classe)
     {
-        switch (classe)
-        {
-            case "Hexadécimeur": return new int[] { 25, 14,  5,  8 };
-            case "Cryptolame":   return new int[] { 16, 13,  5, 11 };
-            case "Hackmancien":  return new int[] { 14, 10, 30, 10 };
-            case "Firewaller":   return new int[] { 22, 15, 25, 13 };
-            case "Algorythmancien": return new int[] { 16, 11, 20, 16 };
-            default:             return new int[] { 10, 10,  0,  0 };
-        }
+        string cfg = File.ReadAllText(CONFIG_CLASSES);
+        int pvBase = int.Parse(LireValeur(cfg, classe + "_pvBase"));
+        int caBase = int.Parse(LireValeur(cfg, classe + "_caBase"));
+        return pvBase != 0 ? new int[] { pvBase, caBase, 0, 0 } : new int[] { 10, 10, 0, 0 };
     }
 
 	private string LireValeur(string json, string cle)

@@ -4,6 +4,7 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
 
     public bool Execute()
     {
@@ -70,20 +71,22 @@ public class CPHInline
                     {
                         // Rencontre combat : pause quête + déclencher combat
                         string[] ennemis = { "Martre-Trojan", "Sentinelle du Castor", "Ombre de la mémoire", "Drone-racine", "Parasite de données", "Sanglier-Crash", "Taupe-Malware" };
-                        int[] pvEnnemis = { 30, 25, 20, 15, 18, 35, 22 };
                         int idx = rng.Next(ennemis.Length);
+                        string cfgE  = File.ReadAllText(CONFIG_ENNEMIS);
+                        int pvEnnemi = int.Parse(LireValeur(cfgE, ennemis[idx] + "_pv"));
+                        if (pvEnnemi == 0) pvEnnemi = 20;
 
                         json = ModifierValeur(json, "enRencontre", "true", false);
                         json = ModifierValeur(json, "rencontreType", "combat", true);
                         json = ModifierValeur(json, "quetePauseDebut", maintenant.ToString(), false);
                         json = ModifierValeur(json, "enCombat", "true", false);
                         json = ModifierValeur(json, "ennemiNom", ennemis[idx], true);
-                        json = ModifierValeur(json, "ennemiPVActuels", pvEnnemis[idx].ToString(), false);
+                        json = ModifierValeur(json, "ennemiPVActuels", pvEnnemi.ToString(), false);
                         json = ModifierValeur(json, "tourCombat", "1", false);
                         json = ModifierValeur(json, "buffActif", "false", false);
                         json = ModifierValeur(json, "protectionActive", "false", false);
                         File.WriteAllText(chemin, json);
-                        CPH.SendMessage(nomJoueur + ", un " + ennemis[idx] + " surgit sur ta route ! (" + pvEnnemis[idx] + " PV) Quête mise en pause — bats-toi !");
+                        CPH.SendMessage(nomJoueur + ", un " + ennemis[idx] + " surgit sur ta route ! (" + pvEnnemi + " PV) Quête mise en pause — bats-toi !");
                         encounterLancee = true;
                     }
                     else if (typeRoll == 1)

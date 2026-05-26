@@ -198,9 +198,9 @@ Les rencontres de quête sont gérées directement dans le JSON joueur.
 |--------|----|----|------|---------|------|-----------|
 | Hexadécimeur | 25 | 14 | 5 | 8 | Épée | 1d8 |
 | Cryptolame | 16 | 13 | 5 | 11 | Dual-Dagues | 1d6+1d6 (2 attaques) |
-| Hackmancien | 14 | 10 | 30 | 10 | Bâton-Magique | 1d10 |
+| Hackmancien | 14 | 10 | 30 | 10 | Bâton-Magique | 1d12 |
 | Firewaller | 22 | 15 | 25 | 13 | Marteau-Rune | 1d8 |
-| Algorythmancien | 16 | 11 | 20 | 16 | Luth-Code | 1d6 |
+| Algorythmancien | 16 | 11 | 20 | 16 | Luth-Code | 1d8 |
 
 > ⚠️ Le nom exact en code est `"Algorythmancien"` (pas `"Algorythmien"`).
 
@@ -234,9 +234,9 @@ private int[] GetClasseBase(string classe)
 |--------|--------------|--------------|
 | Hexadécimeur | **Bloc-Hex** : +8 PV max | **Surcharge** : 2 attaques 1d8, -2 CA |
 | Cryptolame | **Byte-Fantôme** : 3 attaques 1d6 | **Pointeur-Null** : 1d10, typeArme="Arc" |
-| Hackmancien | **Faille-Zéro** : 1d12 | **Compilateur** : buff UN allié +2 attaque |
+| Hackmancien | **Faille-Zéro** : 2d8 | **Compilateur** : buff UN allié +2 attaque |
 | Firewaller | **Protocole-Sacré** : aura -1 dégât allié | **Serment-Binaire** : Smite +1d8 |
-| Algorythmancien | **Barde-Binaire** : 1d8 + buff TOUS | **Patch-Mélodique** : soin 1d8+3 |
+| Algorythmancien | **Barde-Binaire** : 1d10 + buff TOUS | **Patch-Mélodique** : soin 1d8+3 |
 
 ---
 
@@ -454,10 +454,10 @@ private int RollDegats(string classe, Random rng)
     switch (classe)
     {
         case "Hexadécimeur":    return rng.Next(1, 9);   // 1d8
-        case "Hackmancien":     return rng.Next(1, 11);  // 1d10
+        case "Hackmancien":     return rng.Next(1, 13);  // 1d12
         case "Firewaller":      return rng.Next(1, 9);   // 1d8
-        case "Algorythmancien": return rng.Next(1, 7);   // 1d6
-        default:                return rng.Next(1, 7);   // 1d6
+        case "Algorythmancien": return rng.Next(1, 9);   // 1d8
+        default:                return rng.Next(1, 9);   // 1d8
     }
 }
 ```

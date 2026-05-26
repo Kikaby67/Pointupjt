@@ -116,20 +116,20 @@
 | Charisme | 10 | fixe |
 | Bonus Attaque | 0 | + 1d4 (+1 à +4) |
 | Arme | Bâton-Magique | fixe |
-| Dé de dégâts | 1d10 | magique |
+| Dé de dégâts | 1d12 | magique |
 
 ### Actions disponibles
 | Commande | Coût | Effet |
 |----------|------|-------|
-| `!attaque` | — | d20 vs CA ennemi → 1d10 dégâts magiques |
+| `!attaque` | — | d20 vs CA ennemi → 1d12 dégâts magiques |
 | `!soin` | 5 mana | Récupère 1d6 PV |
 | `!defense` | — | CA +3 ce tour, pas d'attaque |
 | `!fuir` | — | d20 ≥ 12 → fuite réussie |
 
 ### Sous-classes — Niveau 5
 #### 🕳️ Faille-Zéro
-*La Faille-Zéro est l'exploit que personne n'a encore patché. Le Hackmancien qui la maîtrise frappe là où le système ne peut se défendre — 1d12 dégâts bruts, directs dans le cœur du code. Aucun pare-feu connu n'y résiste.*
-- Dé de dégâts passe à **1d12**
+*La Faille-Zéro est l'exploit que personne n'a encore patché. Le Hackmancien qui la maîtrise frappe là où le système ne peut se défendre — 2d8 dégâts bruts, directs dans le cœur du code. Aucun pare-feu connu n'y résiste.*
+- Dé de dégâts passe à **2d8** (max 16)
 
 #### 🔧 Compilateur
 *Le Compilateur ne combat pas seul — il assemble. Comme un programme qui orchestre des modules indépendants, il transforme la force brute de ses alliés en un exécutable commun. Il ne frappe pas plus fort. Il fait frapper les autres mieux.*
@@ -190,20 +190,20 @@
 | Charisme | 16 | fixe |
 | Bonus Attaque | 0 | + 1d4 (+1 à +4) |
 | Arme | Luth-Code | fixe |
-| Dé de dégâts | 1d6 | magique |
+| Dé de dégâts | 1d8 | magique |
 
 ### Actions disponibles
 | Commande | Coût | Effet |
 |----------|------|-------|
-| `!attaque` | — | d20 vs CA ennemi → 1d6 dégâts |
+| `!attaque` | — | d20 vs CA ennemi → 1d8 dégâts |
 | `!soin` | 5 mana | Récupère 1d6 PV |
 | `!defense` | — | CA +3 ce tour, pas d'attaque |
 | `!fuir` | — | d20 ≥ 12 → fuite réussie |
 
 ### Sous-classes — Niveau 5
 #### 🎸 Barde-Binaire
-*Le Barde-Binaire a compris que la musique d'Arbonet est binaire par nature — des signaux qui s'enchaînent, des ondes qui portent des instructions. Sa mélodie en 1d8 résonne dans tous les circuits alliés à la fois, les synchronisant dans un même tempo offensif. Un seul accord. Tous touchés.*
-- Dé de dégâts passe à **1d8**
+*Le Barde-Binaire a compris que la musique d'Arbonet est binaire par nature — des signaux qui s'enchaînent, des ondes qui portent des instructions. Sa mélodie en 1d10 résonne dans tous les circuits alliés à la fois, les synchronisant dans un même tempo offensif. Un seul accord. Tous touchés.*
+- Dé de dégâts passe à **1d10**
 - Buff offensif disponible pour **toute l'équipe simultanément**
 
 #### 💚 Patch-Mélodique

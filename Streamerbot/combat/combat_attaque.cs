@@ -182,15 +182,16 @@ public class CPHInline
 
     private int RollDegats(string classe, string sousClasse, Random rng)
     {
-        if (sousClasse == "Faille-Zéro")    return rng.Next(1, 13);             // 1d12
-        if (sousClasse == "Barde-Binaire")  return rng.Next(1, 9);              // 1d8
-        if (sousClasse == "Serment-Binaire") return rng.Next(1, 9) + rng.Next(1, 9); // 1d8 + Smite 1d8
+        if (sousClasse == "Faille-Zéro")     return rng.Next(1, 9) + rng.Next(1, 9);  // 2d8
+        if (sousClasse == "Barde-Binaire")   return rng.Next(1, 11);                   // 1d10
+        if (sousClasse == "Serment-Binaire") return rng.Next(1, 9) + rng.Next(1, 9);  // 1d8 + Smite 1d8
         switch (classe)
         {
-            case "Hexadécimeur": return rng.Next(1, 9);   // 1d8
-            case "Hackmancien":  return rng.Next(1, 11);  // 1d10
-            case "Firewaller":   return rng.Next(1, 9);   // 1d8
-            default:             return rng.Next(1, 7);   // 1d6
+            case "Hexadécimeur":    return rng.Next(1, 9);   // 1d8
+            case "Hackmancien":     return rng.Next(1, 13);  // 1d12
+            case "Firewaller":      return rng.Next(1, 9);   // 1d8
+            case "Algorythmancien": return rng.Next(1, 9);   // 1d8
+            default:                return rng.Next(1, 9);   // 1d8
         }
     }
 

@@ -195,7 +195,7 @@ public class CPHInline
             case "entretien_02":
                 return new string[]
                 {
-                    "Un marchand cherche un aventurier pour renforcer sa bourique. " +
+                    "Un marchand cherche un aventurier pour renforcer sa boutique. " +
                     "Durée estimée : 20 min",
                     "4", "70", "7"
                 };

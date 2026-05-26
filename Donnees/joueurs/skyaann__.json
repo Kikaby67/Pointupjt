@@ -1,0 +1,43 @@
+{
+  "nomJoueur": "skyaann__",
+  "ram": 14,
+  "niveau": 1,
+  "experience": 434,
+  "classeChoisie": true,
+  "classe": "Firewaller",
+  "sousClasseChoisie": false,
+  "sousClasse": "",
+  "typeArme": "Marteau-Rune",
+  "pvMax": 27,
+  "pvActuels": 25,
+  "classeArmure": 16,
+  "bonusAttaque": 1,
+  "manaMax": 25,
+  "manaActuels": 25,
+  "charisme": 13,
+  "enCombat": false,
+  "enQuete": false,
+  "queteId": "artefact_04",
+  "queteTicksRestants": 0,
+  "queteDernierTick": 1779752557,
+  "queteTotalPause": 0,
+  "quetePauseDebut": 0,
+  "queteCooldownFin": 0,
+  "enRencontre": false,
+  "rencontreType": "",
+  "dernierCheckRencontre": 1779753130,
+  "reposCooldownFin": 0,
+  "combatActuel": {
+    "ennemiNom": "Taupe-Malware",
+    "ennemiPVActuels": 0,
+    "buffActif": false,
+    "protectionActive": false,
+    "tourCombat": 15
+  },
+  "inventaire": [],
+  "statistiques": {
+    "combatsGagnes": 0,
+    "combatsPerdus": 0,
+    "quetesTerminees": 0
+  }
+}

@@ -160,6 +160,7 @@ public class CPHInline
                 int ram = int.Parse(data[3]);
                 json = AjouterValeur(json, "experience", xp);
                 json = AjouterValeur(json, "ram", ram);
+                json = AjouterValeur(json, "quetesTerminees", 1);
                 File.WriteAllText(chemin, json);
                 CPH.SendMessage(nomJoueur + ", ta quête est terminée ! Succès ! Tu gagnes " + xp + " XP et " + ram + " RAM. Bien joué aventurier !");
             }

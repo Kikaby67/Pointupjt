@@ -134,6 +134,7 @@ public class CPHInline
             json = ModifierValeur(json, "tourCombat", (tour + 1).ToString(), false);
             json = AjouterValeur(json, "experience", recompenses[0]);
             json = AjouterValeur(json, "ram", recompenses[1]);
+            json = AjouterValeur(json, "combatsGagnes", 1);
             File.WriteAllText(cheminFichier, json);
             CPH.SendMessage(msgAttaque + ". " + ennemNom + " s'effondre !");
             string msgVictoire = nomJoueur + " remporte le combat ! +" + recompenses[0] + " XP, +" + recompenses[1] + " RAM.";
@@ -163,6 +164,7 @@ public class CPHInline
         {
             json = ModifierValeur(json, "enCombat", "false", false);
             json = ModifierValeur(json, "tourCombat", (tour + 1).ToString(), false);
+            json = AjouterValeur(json, "combatsPerdus", 1);
             File.WriteAllText(cheminFichier, json);
             CPH.SendMessage(msgAttaque + ". " + ennemNom + " : " + ennemPV + " PV restants.");
             CPH.SendMessage(msgRiposte);

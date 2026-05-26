@@ -1,0 +1,43 @@
+{
+  "nomJoueur": "tadeworking",
+  "ram": 15,
+  "niveau": 1,
+  "experience": 111,
+  "classeChoisie": true,
+  "classe": "Cryptolame",
+  "sousClasseChoisie": false,
+  "sousClasse": "",
+  "typeArme": "Double-Dagues",
+  "pvMax": 17,
+  "pvActuels": 17,
+  "classeArmure": 15,
+  "bonusAttaque": 4,
+  "manaMax": 5,
+  "manaActuels": 5,
+  "charisme": 11,
+  "enCombat": true,
+  "enQuete": true,
+  "queteId": "entretien_01",
+  "queteTicksRestants": 3,
+  "queteDernierTick": 1779750095,
+  "queteTotalPause": 0,
+  "quetePauseDebut": 1779750828,
+  "queteCooldownFin": 0,
+  "enRencontre": true,
+  "rencontreType": "combat",
+  "dernierCheckRencontre": 1779750828,
+  "reposCooldownFin": 0,
+  "combatActuel": {
+    "ennemiNom": "Ombre de la mémoire",
+    "ennemiPVActuels": 20,
+    "buffActif": false,
+    "protectionActive": false,
+    "tourCombat": 1
+  },
+  "inventaire": [],
+  "statistiques": {
+    "combatsGagnes": 0,
+    "combatsPerdus": 0,
+    "quetesTerminees": 0
+  }
+}

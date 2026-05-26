@@ -76,6 +76,7 @@ public class CPHInline
         {
             json = ModifierValeur(json, "enCombat", "false", false);
             json = ModifierValeur(json, "tourCombat", (tour + 1).ToString(), false);
+            json = AjouterValeur(json, "combatsPerdus", 1);
             File.WriteAllText(cheminFichier, json);
             CPH.SendMessage(msgSoin);
             CPH.SendMessage(msgRiposte);
@@ -121,6 +122,12 @@ public class CPHInline
             case "Taupe-Malware":         return new int[] { 13, 6 };
             default:                      return new int[] { 12, 6 };
         }
+    }
+
+    private string AjouterValeur(string json, string cle, int montant)
+    {
+        int val = int.Parse(LireValeur(json, cle));
+        return ModifierValeur(json, cle, (val + montant).ToString(), false);
     }
 
     private string LireValeur(string json, string cle)

@@ -27,6 +27,7 @@
   "rencontreType": "combat",
   "dernierCheckRencontre": 1779750828,
   "reposCooldownFin": 0,
+  "queteEventsUsed": 0,
   "combatActuel": {
     "ennemiNom": "Ombre de la mémoire",
     "ennemiPVActuels": 20,
@@ -34,7 +35,10 @@
     "protectionActive": false,
     "tourCombat": 1
   },
-  "inventaire": [],
+  "inventaire": "",
+  "armeEquipee": "Croc-de-Loup",
+  "armureEquipee": "",
+  "accessoireEquipe": "",
   "statistiques": {
     "combatsGagnes": 0,
     "combatsPerdus": 0,

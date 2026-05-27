@@ -30,7 +30,11 @@ Pointu-PJT/
 │   │   ├── ChoisirSousClasse/
 │   │   ├── InfoClasses/         # !hexadécimeur, !cryptolame, etc.
 │   │   ├── Repos/               # !repos
-│   │   └── Arbonet/             # !arbonet
+│   │   ├── Arbonet/             # !arbonet
+│   │   ├── Inventaire/          # !inventaire
+│   │   ├── Equiper/             # !equiper
+│   │   ├── Vendre/              # !vendre
+│   │   └── Utiliser/            # !utiliser
 │   ├── quetes/
 │   │   ├── quest_system.cs      # !quete (lancer / consulter)
 │   │   └── quest_timer.cs       # Timer QuestCheck (30s, auto-résolution + rencontres)
@@ -48,6 +52,7 @@ Pointu-PJT/
 │   ├── joueurs/                 # Un .json par joueur (ex: kikabygaming.json)
 │   ├── config_classes.json      # ★ Source unique : stats classes + sous-classes
 │   ├── config_ennemis.json      # ★ Source unique : stats tous les ennemis
+│   ├── config_items.json        # ★ Source unique : stats tous les items
 │   └── etat_global.json         # Rencontre manuelle active (streamer)
 ├── Lore/
 │   ├── LA_LEGENDE_DE_POINTU_V2.md
@@ -256,7 +261,7 @@ Utilisé uniquement pour les rencontres manuelles lancées par le streamer.
 | Classe | PV | CA | Mana | Charisme | Arme | Dégâts | Soin |
 |--------|----|----|------|---------|------|--------|------|
 | Hexadécimeur | 25 | 14 | 5 | 8 | Épée | 1d8 | 1d4 |
-| Cryptolame | 16 | 13 | 5 | 11 | Dual-Dagues | 1d6 ×2 att. | 1d4 |
+| Cryptolame | 16 | 13 | 5 | 11 | Double-Dagues | 1d6 ×2 att. | 1d4 |
 | Hackmancien | 14 | 10 | 30 | 10 | Bâton-Magique | 1d12 | 1d6 |
 | Firewaller | 22 | 15 | 25 | 13 | Marteau-Rune | 1d8 | 1d8+3 |
 | Algorythmancien | 16 | 11 | 20 | 16 | Luth-Code | 1d8 | 1d6 |
@@ -277,7 +282,7 @@ Toutes ces valeurs sont dans `config_classes.json`. Le code ne les duplique pas.
 | Classe | Sous-classe A | Sous-classe B |
 |--------|--------------|--------------|
 | Hexadécimeur | **Bloc-Hex** : +8 PV max | **Surcharge** : 2 attaques 1d8, -2 CA |
-| Cryptolame | **Byte-Fantôme** : 3 attaques 1d6 | **Pointeur-Null** : 1d10, Arc |
+| Cryptolame | **Byte-Fantôme** : 3 attaques 1d6 | **Pointeur-Null** : 1d10, Arc-Binaire |
 | Hackmancien | **Faille-Zéro** : 2d8 | **Compilateur** : buff allié +2 attaque |
 | Firewaller | **Protocole-Sacré** : aura défense | **Serment-Binaire** : Smite +1d8 (2d8 total) |
 | Algorythmancien | **Barde-Binaire** : 1d10 + buff TOUS | **Patch-Mélodique** : soin 1d8+3 |
@@ -395,12 +400,12 @@ Crée le JSON joueur avec tous les champs (y compris `reposCooldownFin`). Indiqu
 Trigger : Command Triggered → !rejoindre
 ```
 
-### `!profil` → `Commande_Profil.cs`
+### `!profil` → `commande_!profil.cs`
 Affiche les stats en 4 messages :
 1. Nom | Niv | XP | Ram
 2. Classe | Sous-classe | Arme (ou invite à choisir)
 3. PV/pvMax | CA | Atq | Mana (si > 0) | Charisme (si > 0)
-4. Combats V/D | Quêtes | 🔴 En combat / 🟡 En quête si actif
+4. Combats V/D | Quêtes | EN COMBAT / EN QUETE si actif | items équipés (Arme/Armure/Acc si présents)
 ```
 Trigger : Command Triggered → !profil
 ```
@@ -475,9 +480,10 @@ Parcourt tous les fichiers joueurs. Pour chaque joueur `enQuete == true` :
 
 **CAS 2** — Check rencontre toutes les 3 min :
 - 40% chance, parmi 3 types (Combat / Événement / Marchand)
-- PV ennemi lu depuis `config_ennemis.json`
+- Marchand : soigne les PV + vend une Potion-Recharge pour 30 RAM si sac < 8 items et joueur a ≥ 30 RAM
 
 **CAS 3** — Fin de quête : 80% succès / 20% échec
+- Succès artefact uniquement : 70% chance de loot 1 item parmi `{ Ligne-Reseau, Morceau-Arbre-Serveur, Potion-Recharge, Bague-de-protection, Armure-de-feuille, Gants-de-force }` si sac < 8
 ```
 Trigger : Timed Action → QuestCheck (30s, repeat)
 ```
@@ -508,6 +514,8 @@ private int RollDegats(string classe, string sousClasse, Random rng)
 ```
 
 - `buffActif` ajoute +2 au bonusAttaque ce tour
+- `degatsItemBonus = GetBonusItems(json, "attaqueBonus")` → s'ajoute aux dégâts (pas au toucher)
+- `caItemBonus = GetBonusItems(json, "caBonus")` → s'ajoute à la CA effective du joueur vs riposte
 - Victoire : `combatsGagnes += 1`, +XP +RAM depuis config_ennemis
 - Défaite : `combatsPerdus += 1`
 ```
@@ -538,7 +546,7 @@ Trigger : Command Triggered → !soin
 
 ### `!defense` → `combat/combat_defense.cs`
 Posture défensive — pas d'attaque joueur ce tour.
-- CA temporaire = `classeArmure + 3` pour ce tour uniquement
+- CA temporaire = `classeArmure + caItemBonus + 3` pour ce tour uniquement
 - L'ennemi attaque contre cette CA augmentée
 ```
 Trigger : Command Triggered → !defense
@@ -551,6 +559,45 @@ Tentative de fuite du combat.
 - **Fuite échouée** : l'ennemi riposte · si `pvActuels <= 0` → `combatsPerdus += 1`
 ```
 Trigger : Command Triggered → !fuir
+```
+
+### `!inventaire` → `Commandes/Inventaire/commande_inventaire.cs`
+Affiche le sac et les slots équipés en 2 messages.
+- Message 1 : `NomJoueur — Sac (N) : item1 · item2 · ...` (vide si rien)
+- Message 2 : `NomJoueur — Équipé : Arme X · Armure X · Accessoire X` (slots vides = rien)
+- Lit `inventaire` via `LireValeurString` (CSV entre guillemets)
+```
+Trigger : Command Triggered → !inventaire
+```
+
+### `!equiper [nom_item]` → `Commandes/Equiper/commande_equiper.cs`
+Équipe un item du sac dans son slot (arme/armure/accessoire).
+- Swap : item du sac → slot, ancien item équipé → sac (taille inchangée)
+- Lit `_slot` depuis `config_items.json` → détermine le champ (`armeEquipee`, `armureEquipee`, `accessoireEquipe`)
+- Bloqué si `enCombat == true`
+- Refuse les consommables et items de vente (redirect vers `!utiliser` / `!vendre`)
+- Recherche insensible à la casse, stocke le nom exact du config
+```
+Trigger : Command Triggered → !equiper
+```
+
+### `!vendre [nom_item]` → `Commandes/Vendre/commande_vendre.cs`
+Vend un item du sac ou d'un slot équipé contre des RAM.
+- Cherche d'abord dans l'inventaire (CSV), puis dans les slots équipés
+- Lit `_prixVente` depuis config (défaut 5 RAM)
+- Bloqué si `enCombat == true`
+```
+Trigger : Command Triggered → !vendre
+```
+
+### `!utiliser [nom_item]` → `Commandes/Utiliser/commande_utiliser.cs`
+Consomme un item du sac (`_slot == "consommable"`).
+- Lit `_pvSoin` et `_manaSoin` depuis config, applique plafonnés à pvMax/manaMax
+- Retire l'item du sac après usage
+- Fonctionne en et hors combat
+- Cache le message mana si `manaMax == 0`
+```
+Trigger : Command Triggered → !utiliser
 ```
 
 ### Channel Point Rewards
@@ -592,6 +639,7 @@ Trigger : Manuel (bouton Streamer.bot)
    private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
    private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
    private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
+   private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
    ```
 3. Vérifier `File.Exists(cheminFichier)` en premier → message + `return true`
 4. Vérifier `classeChoisie == "true"` avant toute action de jeu
@@ -599,9 +647,115 @@ Trigger : Manuel (bouton Streamer.bot)
 6. **Ne jamais hardcoder de stats de classe/sous-classe/ennemi** → lire depuis config
 7. Toujours `File.WriteAllText(cheminFichier, json)` après modification
 8. Après modification de `experience` → vérifier `CalculerNiveau` + `AppliquerBonusNiveau`
-9. Copier les 3 méthodes utilitaires en bas du fichier
+9. Copier les méthodes utilitaires en bas du fichier (selon besoin) :
+   - `LireValeur` / `ModifierValeur` / `AjouterValeur` → toujours
+   - `LireValeurString` / `ModifierValeurString` → si on lit/écrit `inventaire` (CSV entre guillemets)
+   - `GetBonusItems` → dans tous les fichiers combat et dans les commandes item
 10. Utiliser `nomJoueur.ToLower()` pour le nom du fichier
 11. Ne jamais utiliser `CPH.Wait()` dans un flux de quête — bloque Streamer.bot
+
+---
+
+## Système d'items ✅
+
+### `config_items.json` — Structure
+
+Clés format plat : `"NomItem_stat": valeur`
+
+**Items équipables** (`_slot: "arme"` | `"armure"` | `"accessoire"`) :
+```
+_slot          ← détermine le champ joueur cible (armeEquipee / armureEquipee / accessoireEquipe)
+_attaqueBonus  ← bonus aux dégâts (pas au toucher !)
+_caBonus       ← bonus à la CA défensive du joueur
+_manaBonus     ← bonus mana (réservé futur)
+_charismeBonus ← bonus charisme (réservé futur)
+_prixVente     ← RAM obtenus à la vente
+_description   ← texte affiché dans !inventaire
+```
+
+**Consommables** (`_slot: "consommable"`) :
+```
+_pvSoin    ← PV restaurés (direct, pas un dé)
+_manaSoin  ← Mana restauré
+_prixVente
+```
+
+**Items de vente seule** (`_slot: "vente"`) :
+```
+_prixVente
+```
+
+### Items disponibles
+
+| Nom | Slot | Bonus | Prix vente |
+|-----|------|-------|-----------|
+| Lame-de-Pointu | arme | +2 atq | 30 RAM |
+| Croc-de-Loup | arme | +1 atq | 20 RAM |
+| Sceptre-de-L'Antre | arme | +3 atq | 40 RAM |
+| Marteau-Carapace | arme | +2 atq | 35 RAM |
+| Luth-01 | arme | +1 atq | 20 RAM |
+| Arc-Fleau | arme | +2 atq | 30 RAM |
+| Armure-de-feuille | armure | +2 CA | 25 RAM |
+| Bouclier-binaire | armure | +1 CA | 15 RAM |
+| Bague-de-protection | accessoire | +1 CA | 15 RAM |
+| Gants-de-force | accessoire | +1 atq | 15 RAM |
+| Potion-Recharge | consommable | +15 PV, +5 Mana | 10 RAM |
+| Morceau-Arbre-Serveur | vente | — | 20 RAM |
+| Ligne-Reseau | vente | — | 15 RAM |
+
+### Inventaire joueur
+- Champ `inventaire` : CSV entre guillemets (`"item1,item2,item3"`)
+- Max 8 items
+- Slots équipés : `armeEquipee`, `armureEquipee`, `accessoireEquipe` (string, hors inventaire)
+- Utiliser `LireValeurString` / `ModifierValeurString` pour lire/écrire `inventaire`
+- Utiliser `LireValeur` normal pour les slots équipés (une seule valeur, pas de CSV)
+
+### `GetBonusItems` — méthode helper combat
+
+```csharp
+private int GetBonusItems(string json, string stat)
+{
+    string   cfgItems = File.ReadAllText(CONFIG_ITEMS);
+    string[] slots    = { "armeEquipee", "armureEquipee", "accessoireEquipe" };
+    int total = 0;
+    foreach (string slot in slots)
+    {
+        string item = LireValeur(json, slot);
+        if (item != "" && item != "0")
+            total += int.Parse(LireValeur(cfgItems, item + "_" + stat));
+    }
+    return total;
+}
+```
+
+### Méthodes string pour l'inventaire CSV
+
+```csharp
+private string LireValeurString(string json, string cle)
+{
+    string marqueur = "\"" + cle + "\": \"";
+    int posDebut    = json.IndexOf(marqueur);
+    if (posDebut == -1) return "";
+    posDebut       += marqueur.Length;
+    int posFin      = json.IndexOf("\"", posDebut);
+    if (posFin == -1) return "";
+    return json.Substring(posDebut, posFin - posDebut);
+}
+
+private string ModifierValeurString(string json, string cle, string val)
+{
+    string marqueur = "\"" + cle + "\": \"";
+    int posDebut    = json.IndexOf(marqueur);
+    if (posDebut == -1) return json;
+    posDebut       += marqueur.Length;
+    int posFin      = json.IndexOf("\"", posDebut);
+    if (posFin == -1) return json;
+    return json.Substring(0, posDebut) + val + json.Substring(posFin);
+}
+```
+
+> ⚠️ `LireValeur` s'arrête à la première `,` ou `\n` — elle **casse** les valeurs CSV.
+> Toujours utiliser `LireValeurString` pour `inventaire`.
 
 ---
 

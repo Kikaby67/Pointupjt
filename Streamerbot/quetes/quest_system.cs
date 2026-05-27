@@ -3,11 +3,12 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_QUETES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_quetes.json";
 
     public bool Execute()
     {
         string nomJoueur = args["user"].ToString();
-        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, $"{nomJoueur}.json");
+        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, nomJoueur.ToLower() + ".json");
 
         if (!File.Exists(cheminFichier))
         {
@@ -38,7 +39,8 @@ public class CPHInline
             return true;
         }
 
-        Random rng = new Random();
+        int seed = (nomJoueur.GetHashCode() ^ (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) & int.MaxValue;
+        Random rng = new Random(seed);
 
         if (LireValeur(json, "enQuete") == "true")
         {
@@ -103,6 +105,7 @@ public class CPHInline
         json = ModifierValeur(json, "queteTotalPause", "0", false);
         json = ModifierValeur(json, "queteCooldownFin", "0", false);
         json = ModifierValeur(json, "dernierCheckRencontre", maintenant.ToString(), false);
+        json = ModifierValeur(json, "queteEventsUsed", "0", false);
 
         File.WriteAllText(cheminFichier, json);
         CPH.SendMessage(nomJoueur + ", tu pars en quête : " + questData[0] + " !" );
@@ -110,106 +113,15 @@ public class CPHInline
         return true;
     }
 
-    // Descriptif quetes, ticks, xpRecompense, ramRecompemse
     private string[] GetQueteData(string id)
     {
-        switch (id)
-        {
-            case "artefact_01":
-                return new string[]
-                {
-                    "Direction le nord ! Dans une cabane perchée, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 30 min",
-                    "6", "100", "10"
-                };
-            case "artefact_02":
-                return new string[]
-                {
-                    "Direction le sud ! Dans une grotte sombre, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 20 min",
-                    "5", "80", "8"
-                };
-            case "artefact_03":
-                return new string[]
-                {
-                    "Direction l'est ! Dans une tour abandonnée, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 15 min",
-                    "3", "50", "5"
-                };
-            case "artefact_04":
-                return new string[]
-                {
-                    "Direction l'ouest ! Dans une forêt mystérieuse, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 10 min",
-                    "2", "30", "3"
-                };
-            case "artefact_05":
-                return new string[]
-                {
-                    "Direction le centre ! Dans une caverne secrète, " +
-                    "un artefact de Pointu t'attend. Durée estimée : 5 min",
-                    "1", "10", "1"
-                };
-            case "service_01":
-                return new string[]
-                {
-                    "Un villageois a besoin d'aide pour récolter des ressources. " +
-                    "Durée estimée : 15 min",
-                    "3", "50", "5"
-                };
-            case "service_02":
-                return new string[]
-                {
-                    "Un marchand cherche un aventurier pour escorter sa caravane. " +
-                    "Durée estimée : 20 min",
-                    "4", "70", "7"
-                };
-            case "service_03":
-                return new string[]
-                {
-                    "Un forgeron a besoin de matériaux rares pour fabriquer une arme. " +
-                    "Durée estimée : 25 min",
-                    "5", "90", "9"
-                };
-            case "service_04":
-                return new string[]
-                {
-                    "Un noble cherche un aventurier pour une mission diplomatique. " +
-                    "Durée estimée : 30 min",
-                    "6", "120", "12"
-                };
-            case "service_05":
-                return new string[]
-                {
-                    "Un mage a besoin d'aide pour collecter des ingrédients magiques. " +
-                    "Durée estimée : 10 min",
-                    "2", "40", "4"
-                };
-            case "entretien_01":
-                return new string[]
-                {
-                    "Un villageois a besoin d'aide pour la sécurité de son réseau. " +
-                    "Durée estimée : 15 min",
-                    "3", "50", "5"
-                };
-            case "entretien_02":
-                return new string[]
-                {
-                    "Un marchand cherche un aventurier pour renforcer sa boutique. " +
-                    "Durée estimée : 20 min",
-                    "4", "70", "7"
-                };
-            case "entretien_03":
-                return new string[]
-                {
-                    "L'arbre serveur a besoin d'être entretenue. " +
-                    "Durée estimée : 25 min",
-                    "5", "90", "9"
-                };
-
-            default:
-                return new string[] { "Quête inconnue", "1", "0", "0" };
-        }
+        string cfg   = File.ReadAllText(CONFIG_QUETES);
+        string ticks = LireValeur(cfg, id + "_ticks");
+        if (ticks == "0") return new string[] { "Quête inconnue", "1", "0", "0" };
+        string desc = LireValeurString(cfg, id + "_description");
+        string xp   = LireValeur(cfg, id + "_xp");
+        string ram  = LireValeur(cfg, id + "_ram");
+        return new string[] { desc, ticks, xp, ram };
     }
 
     private string LireValeur(string json, string cle)
@@ -220,6 +132,17 @@ public class CPHInline
         posDebut += marqueur.Length;
         int posFin = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
         return json.Substring(posDebut, posFin - posDebut).Trim().Trim('"');
+    }
+
+    private string LireValeurString(string json, string cle)
+    {
+        string marqueur = "\"" + cle + "\": \"";
+        int posDebut    = json.IndexOf(marqueur);
+        if (posDebut == -1) return "";
+        posDebut       += marqueur.Length;
+        int posFin      = json.IndexOf("\"", posDebut);
+        if (posFin == -1) return "";
+        return json.Substring(posDebut, posFin - posDebut);
     }
 
     private string AjouterValeur(string json, string cle, int montant)

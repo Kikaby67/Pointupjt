@@ -66,6 +66,7 @@ public class CPHInline
             "  \"rencontreType\": \"\",\n"      +
             "  \"dernierCheckRencontre\": 0,\n" +
             "  \"reposCooldownFin\": 0,\n"      +
+            "  \"queteEventsUsed\": 0,\n"       +
 
             // État du combat en cours
             // Mis à jour à chaque tour de combat
@@ -78,7 +79,11 @@ public class CPHInline
             "  },\n"                                    +
 
             // Inventaire
-            "  \"inventaire\": [],\n" +
+            "  \"inventaire\": \"\",\n"    +
+            "  \"armeEquipee\": \"\",\n"    +
+            "  \"armureEquipee\": \"\",\n"  +
+            "  \"accessoireEquipe\": \"\",\n"    +
+            
 
             // Statistiques globales
             "  \"statistiques\": {\n"             +

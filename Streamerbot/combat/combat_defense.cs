@@ -5,11 +5,12 @@ public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
+    private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
 
     public bool Execute()
     {
-        string nomJoueur = args["user"].ToString();
-        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, $"{nomJoueur}.json");
+        string nomJoueur     = args["user"].ToString();
+        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, nomJoueur.ToLower() + ".json");
 
         if (!File.Exists(cheminFichier))
         {
@@ -29,7 +30,8 @@ public class CPHInline
         int joueurPV     = int.Parse(LireValeur(json, "pvActuels"));
         int joueurPVMax  = int.Parse(LireValeur(json, "pvMax"));
         int joueurCA     = int.Parse(LireValeur(json, "classeArmure"));
-        int joueurCADef  = joueurCA + 3; // CA augmentée ce tour
+        int caItemBonus  = GetBonusItems(json, "caBonus");
+        int joueurCADef  = joueurCA + caItemBonus + 3; // CA effective + bonus défense ce tour
         int tour         = int.Parse(LireValeur(json, "tourCombat"));
 
         int[] ennemStats = GetEnnemiStats(ennemNom);
@@ -37,11 +39,11 @@ public class CPHInline
 
         Random rng = new Random();
 
-        CPH.SendMessage(nomJoueur + " prend position défensive ! CA temporaire : " + joueurCADef + " (+" + 3 + " ce tour).");
+        CPH.SendMessage(nomJoueur + " prend position défensive ! CA temporaire : " + joueurCADef + " (base " + (joueurCA + caItemBonus) + " +3 ce tour).");
 
         // === RIPOSTE DE L'ENNEMI (vs CA augmentée) ===
-        int d20Ennemi = rng.Next(1, 21);
-        bool ennemiTouche = d20Ennemi >= joueurCADef;
+        int    d20Ennemi   = rng.Next(1, 21);
+        bool   ennemiTouche = d20Ennemi >= joueurCADef;
         string msgRiposte;
         if (ennemiTouche)
         {
@@ -73,6 +75,20 @@ public class CPHInline
         return true;
     }
 
+    private int GetBonusItems(string json, string stat)
+    {
+        string   cfgItems = File.ReadAllText(CONFIG_ITEMS);
+        string[] slots    = { "armeEquipee", "armureEquipee", "accessoireEquipe" };
+        int total = 0;
+        foreach (string slot in slots)
+        {
+            string item = LireValeur(json, slot);
+            if (item != "" && item != "0")
+                total += int.Parse(LireValeur(cfgItems, item + "_" + stat));
+        }
+        return total;
+    }
+
     private int[] GetEnnemiStats(string nom)
     {
         string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
@@ -90,20 +106,20 @@ public class CPHInline
     private string LireValeur(string json, string cle)
     {
         string marqueur = "\"" + cle + "\": ";
-        int posDebut = json.IndexOf(marqueur);
+        int posDebut    = json.IndexOf(marqueur);
         if (posDebut == -1) return "0";
-        posDebut += marqueur.Length;
-        int posFin = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
+        posDebut       += marqueur.Length;
+        int posFin      = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
         return json.Substring(posDebut, posFin - posDebut).Trim().Trim('"');
     }
 
     private string ModifierValeur(string json, string cle, string val, bool estTexte)
     {
         string marqueur = "\"" + cle + "\": ";
-        int posDebut = json.IndexOf(marqueur);
+        int posDebut    = json.IndexOf(marqueur);
         if (posDebut == -1) return json;
-        posDebut += marqueur.Length;
-        int posFin = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
+        posDebut       += marqueur.Length;
+        int posFin      = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
         string ancienne = json.Substring(posDebut, posFin - posDebut);
         string nouvelle = estTexte ? "\"" + val + "\"" : val;
         return json.Substring(0, posDebut) + nouvelle + json.Substring(posDebut + ancienne.Length);

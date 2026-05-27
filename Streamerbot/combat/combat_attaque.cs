@@ -6,11 +6,13 @@ public class CPHInline
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
     private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
+    private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
+    private const string CONFIG_LEVEL    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_level.json";
 
     public bool Execute()
     {
         string nomJoueur = args["user"].ToString();
-        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, $"{nomJoueur}.json");
+        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, nomJoueur.ToLower() + ".json");
 
         if (!File.Exists(cheminFichier))
         {
@@ -35,8 +37,10 @@ public class CPHInline
         int joueurCA       = int.Parse(LireValeur(json, "classeArmure"));
         int bonusAttaque   = int.Parse(LireValeur(json, "bonusAttaque"));
         bool buffActif     = LireValeur(json, "buffActif") == "true";
-        int bonusTotal     = bonusAttaque + (buffActif ? 2 : 0);
-        int tour           = int.Parse(LireValeur(json, "tourCombat"));
+        int bonusTotal       = bonusAttaque + (buffActif ? 2 : 0);
+        int degatsItemBonus  = GetBonusItems(json, "attaqueBonus");
+        int caItemBonus      = GetBonusItems(json, "caBonus");
+        int tour             = int.Parse(LireValeur(json, "tourCombat"));
         bool enRencontre   = LireValeur(json, "enRencontre") == "true";
 
         int[] ennemStats   = GetEnnemiStats(ennemNom);
@@ -62,7 +66,7 @@ public class CPHInline
                 int d20 = rng.Next(1, 21);
                 if ((d20 + bonusTotal) >= ennemCA)
                 {
-                    int d = RollDegats(classe, sousClasse, rng);
+                    int d = RollDegats(classe, sousClasse, rng) + degatsItemBonus;
                     totalDegats += d;
                     res[i] = "touché -" + d;
                 }
@@ -82,7 +86,7 @@ public class CPHInline
             bool touche = roll >= ennemCA;
             if (touche)
             {
-                totalDegats = RollDegats(classe, sousClasse, rng);
+                totalDegats = RollDegats(classe, sousClasse, rng) + degatsItemBonus;
                 msgAttaque = nomJoueur + " attaque " + ennemNom + " (d20: " + d20 + "+" + bonusTotal + "=" + roll + " vs CA " + ennemCA + ") → TOUCHÉ ! -" + totalDegats + " PV";
             }
             else
@@ -103,6 +107,7 @@ public class CPHInline
             json = AjouterValeur(json, "experience", recompenses[0]);
             json = AjouterValeur(json, "ram", recompenses[1]);
             json = AjouterValeur(json, "combatsGagnes", 1);
+            json = VerifierMonteeNiveau(json, nomJoueur);
             File.WriteAllText(cheminFichier, json);
             CPH.SendMessage(msgAttaque + ". " + ennemNom + " s'effondre !");
             string msgVictoire = nomJoueur + " remporte le combat ! +" + recompenses[0] + " XP, +" + recompenses[1] + " RAM.";
@@ -112,19 +117,20 @@ public class CPHInline
         }
 
         // === RIPOSTE DE L'ENNEMI ===
-        int d20Ennemi = rng.Next(1, 21);
-        bool ennemiTouche = d20Ennemi >= joueurCA;
+        int d20Ennemi    = rng.Next(1, 21);
+        int joueurCAEff  = joueurCA + caItemBonus;
+        bool ennemiTouche = d20Ennemi >= joueurCAEff;
         string msgRiposte;
         if (ennemiTouche)
         {
             int degatsEnnemi = rng.Next(1, ennemDiceMax + 1);
             joueurPV = Math.Max(0, joueurPV - degatsEnnemi);
             json = ModifierValeur(json, "pvActuels", joueurPV.ToString(), false);
-            msgRiposte = ennemNom + " riposte (d20: " + d20Ennemi + " vs CA " + joueurCA + ") → TOUCHÉ ! -" + degatsEnnemi + " PV → " + nomJoueur + " : " + joueurPV + "/" + joueurPVMax + " PV";
+            msgRiposte = ennemNom + " riposte (d20: " + d20Ennemi + " vs CA " + joueurCAEff + ") → TOUCHÉ ! -" + degatsEnnemi + " PV → " + nomJoueur + " : " + joueurPV + "/" + joueurPVMax + " PV";
         }
         else
         {
-            msgRiposte = ennemNom + " riposte (d20: " + d20Ennemi + " vs CA " + joueurCA + ") → RATÉ !";
+            msgRiposte = ennemNom + " riposte (d20: " + d20Ennemi + " vs CA " + joueurCAEff + ") → RATÉ !";
         }
 
         // === DÉFAITE ? ===
@@ -146,6 +152,20 @@ public class CPHInline
         CPH.SendMessage(msgAttaque + ". " + ennemNom + " : " + ennemPV + " PV restants.");
         CPH.SendMessage(msgRiposte);
         return true;
+    }
+
+    private int GetBonusItems(string json, string stat)
+    {
+        string cfgItems  = File.ReadAllText(CONFIG_ITEMS);
+        string[] slots   = { "armeEquipee", "armureEquipee", "accessoireEquipe" };
+        int total = 0;
+        foreach (string slot in slots)
+        {
+            string item = LireValeur(json, slot);
+            if (item != "" && item != "0")
+                total += int.Parse(LireValeur(cfgItems, item + "_" + stat));
+        }
+        return total;
     }
 
     private int RollDegats(string classe, string sousClasse, Random rng)
@@ -176,6 +196,54 @@ public class CPHInline
         int xp  = int.Parse(LireValeur(cfg, nom + "_xp"));
         int ram = int.Parse(LireValeur(cfg, nom + "_ram"));
         return new int[] { xp != 0 ? xp : 15, ram != 0 ? ram : 3 };
+    }
+
+    private string VerifierMonteeNiveau(string json, string nomJoueur)
+    {
+        int niveauActuel  = int.Parse(LireValeur(json, "niveau"));
+        int nouvelXP      = int.Parse(LireValeur(json, "experience"));
+        int nouveauNiveau = CalculerNiveau(nouvelXP);
+        if (nouveauNiveau > niveauActuel)
+        {
+            json = ModifierValeur(json, "niveau", nouveauNiveau.ToString(), false);
+            json = AppliquerBonusNiveau(json, nouveauNiveau);
+            CPH.SendMessage(MessageNiveau(nomJoueur, nouveauNiveau));
+        }
+        return json;
+    }
+
+    private int CalculerNiveau(int xp)
+    {
+        string cfg    = File.ReadAllText(CONFIG_LEVEL);
+        int niveauMax = int.Parse(LireValeur(cfg, "niveauMax"));
+        for (int i = niveauMax; i >= 2; i--)
+            if (xp >= int.Parse(LireValeur(cfg, "niveau_" + i + "_xp"))) return i;
+        return 1;
+    }
+
+    private string AppliquerBonusNiveau(string json, int niveau)
+    {
+        string cfg        = File.ReadAllText(CONFIG_LEVEL);
+        int pvBonus       = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_pvBonus"));
+        int caBonus       = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_caBonus"));
+        int ramBonus      = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_ramBonus"));
+        int charismeBonus = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_charismeBonus"));
+        if (pvBonus > 0)
+        {
+            json = AjouterValeur(json, "pvMax",     pvBonus);
+            json = AjouterValeur(json, "pvActuels", pvBonus);
+        }
+        if (caBonus       > 0) json = AjouterValeur(json, "classeArmure", caBonus);
+        if (ramBonus      > 0) json = AjouterValeur(json, "ram",          ramBonus);
+        if (charismeBonus > 0) json = AjouterValeur(json, "charisme",     charismeBonus);
+        return json;
+    }
+
+    private string MessageNiveau(string nomJoueur, int niveau)
+    {
+        string cfg   = File.ReadAllText(CONFIG_LEVEL);
+        string bonus = LireValeur(cfg, "niveau_" + niveau + "_message");
+        return "🎉 " + nomJoueur + " passe au niveau " + niveau + " ! " + bonus;
     }
 
     private string LireValeur(string json, string cle)

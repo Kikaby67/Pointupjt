@@ -3,54 +3,40 @@ using System.IO;
 
 public class CPHInline
 {
-    private const string DOSSIER_JOUEURS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
-    private const int    XP_PAR_PERIODE   = 5;
-
-    // XP requis pour chaque niveau (index = niveau)
-    // Niveau 1 = 0 XP, Niveau 2 = 300 XP, etc.
-    private static readonly int[] XP_SEUILS =
-        { 0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000 };
+    private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_LEVEL    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_level.json";
+    private const int    XP_PAR_PERIODE  = 5;
 
     public bool Execute()
     {
-        // ── Récupère tous les profils joueurs ─────────────────
         string[] fichiers = Directory.GetFiles(DOSSIER_JOUEURS, "*.json");
 
         foreach (string cheminFichier in fichiers)
         {
             string json = File.ReadAllText(cheminFichier);
 
-            // Pas de classe choisie → pas d'XP
             if (LireValeur(json, "classeChoisie") != "true") continue;
 
-            // ── Ajout des 5 XP ────────────────────────────────
             int xpActuel     = int.Parse(LireValeur(json, "experience"));
             int niveauActuel = int.Parse(LireValeur(json, "niveau"));
             int nouvelXP     = xpActuel + XP_PAR_PERIODE;
 
             json = ModifierValeur(json, "experience", nouvelXP.ToString(), false);
 
-            // ── Vérification de montée de niveau ──────────────
             int nouveauNiveau = CalculerNiveau(nouvelXP);
 
-            if (nouveauNiveau > niveauActuel && nouveauNiveau <= 10)
+            if (nouveauNiveau > niveauActuel)
             {
-                // Mise à jour du niveau
                 json = ModifierValeur(json, "niveau", nouveauNiveau.ToString(), false);
-
-                // Application des bonus du nouveau niveau
                 json = AppliquerBonusNiveau(json, nouveauNiveau);
-
-                // Annonce dans le chat
                 string nomJoueur = LireValeur(json, "nomJoueur");
                 CPH.SendMessage(MessageNiveau(nomJoueur, nouveauNiveau));
             }
 
-            // ── Régénération passive : +2 PV / +3 mana (hors combat) ──
             if (LireValeur(json, "enCombat") != "true")
             {
-                int pvActuels   = int.Parse(LireValeur(json, "pvActuels"));
-                int pvMax       = int.Parse(LireValeur(json, "pvMax"));
+                int pvActuels = int.Parse(LireValeur(json, "pvActuels"));
+                int pvMax     = int.Parse(LireValeur(json, "pvMax"));
                 if (pvActuels < pvMax)
                     json = ModifierValeur(json, "pvActuels", Math.Min(pvActuels + 2, pvMax).ToString(), false);
 
@@ -66,91 +52,44 @@ public class CPHInline
         return true;
     }
 
-    // ── Calcule le niveau selon l'XP total ───────────────────
-    // Parcourt le tableau à l'envers et retourne le premier
-    // niveau dont le seuil est atteint
     private int CalculerNiveau(int xp)
     {
-        for (int i = XP_SEUILS.Length - 1; i >= 1; i--)
+        string cfg      = File.ReadAllText(CONFIG_LEVEL);
+        int niveauMax   = int.Parse(LireValeur(cfg, "niveauMax"));
+        for (int i = niveauMax; i >= 2; i--)
         {
-            if (xp >= XP_SEUILS[i]) return i;
+            int seuil = int.Parse(LireValeur(cfg, "niveau_" + i + "_xp"));
+            if (xp >= seuil) return i;
         }
         return 1;
     }
 
-    // ── Applique le bonus selon le niveau atteint ─────────────
     private string AppliquerBonusNiveau(string json, int niveau)
     {
-        switch (niveau)
+        string cfg        = File.ReadAllText(CONFIG_LEVEL);
+        int pvBonus       = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_pvBonus"));
+        int caBonus       = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_caBonus"));
+        int ramBonus      = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_ramBonus"));
+        int charismeBonus = int.Parse(LireValeur(cfg, "niveau_" + niveau + "_charismeBonus"));
+
+        if (pvBonus > 0)
         {
-            case 2:  // +3 PV
-                json = AjouterValeur(json, "pvMax",      3);
-                json = AjouterValeur(json, "pvActuels",  3);
-                break;
-
-            case 3:  // +1 CA +1 PV
-                json = AjouterValeur(json, "classeArmure", 1);
-                json = AjouterValeur(json, "pvMax",        1);
-                json = AjouterValeur(json, "pvActuels",    1);
-                break;
-
-            case 4:  // +3 PV
-                json = AjouterValeur(json, "pvMax",      3);
-                json = AjouterValeur(json, "pvActuels",  3);
-                break;
-
-            case 5:  // Sous-classe → aucun bonus automatique
-                break;
-
-            case 6:  // +3 PV
-                json = AjouterValeur(json, "pvMax",      3);
-                json = AjouterValeur(json, "pvActuels",  3);
-                break;
-
-            case 7:  // +1 CA +1 PV
-                json = AjouterValeur(json, "classeArmure", 1);
-                json = AjouterValeur(json, "pvMax",        1);
-                json = AjouterValeur(json, "pvActuels",    1);
-                break;
-
-            case 8:  // +100 Ram
-                json = AjouterValeur(json, "ram", 100);
-                break;
-
-            case 9:  // +3 PV
-                json = AjouterValeur(json, "pvMax",      3);
-                json = AjouterValeur(json, "pvActuels",  3);
-                break;
-
-            case 10: // +2 Charisme
-                json = AjouterValeur(json, "charisme", 2);
-                break;
+            json = AjouterValeur(json, "pvMax",     pvBonus);
+            json = AjouterValeur(json, "pvActuels", pvBonus);
         }
+        if (caBonus       > 0) json = AjouterValeur(json, "classeArmure", caBonus);
+        if (ramBonus      > 0) json = AjouterValeur(json, "ram",          ramBonus);
+        if (charismeBonus > 0) json = AjouterValeur(json, "charisme",     charismeBonus);
         return json;
     }
 
-    // ── Message d'annonce selon le niveau ─────────────────────
     private string MessageNiveau(string nomJoueur, int niveau)
     {
-        string bonus;
-        switch (niveau)
-        {
-            case 2:  bonus = "+3 PV max";                                          break;
-            case 3:  bonus = "+1 CA · +1 PV max";                                 break;
-            case 4:  bonus = "+3 PV max";                                          break;
-            case 5:  bonus = "Sous-classe débloquée ! Tape !sousclasse !";  break;
-            case 6:  bonus = "+3 PV max";                                          break;
-            case 7:  bonus = "+1 CA · +1 PV max";                                 break;
-            case 8:  bonus = "+100 Ram";                                           break;
-            case 9:  bonus = "+3 PV max";                                          break;
-            case 10: bonus = "+2 Charisme · Niveau maximum atteint !";             break;
-            default: bonus = "";                                                    break;
-        }
+        string cfg   = File.ReadAllText(CONFIG_LEVEL);
+        string bonus = LireValeur(cfg, "niveau_" + niveau + "_message");
         return "🎉 " + nomJoueur + " passe au niveau " + niveau + " ! " + bonus;
     }
 
-    // ── Lit une valeur et ajoute un montant ───────────────────
-    // Raccourci pour éviter de répéter LireValeur + ModifierValeur
     private string AjouterValeur(string json, string cle, int montant)
     {
         int valeurActuelle = int.Parse(LireValeur(json, cle));

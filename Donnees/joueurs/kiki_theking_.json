@@ -27,6 +27,7 @@
   "queteCooldownFin": 0,
   "dernierCheckRencontre": 1779753888,
   "reposCooldownFin": 1779750968,
+  "queteEventsUsed": 0,
   "combatActuel": {
     "ennemiNom": "Ombre de la mémoire",
     "ennemiPVActuels": 0,
@@ -34,7 +35,10 @@
     "protectionActive": false,
     "tourCombat": 7
   },
-  "inventaire": [],
+  "inventaire": "",
+  "armeEquipee": "Sceptre-de-L'Antre",
+  "armureEquipee": "",
+  "accessoireEquipe": "",
   "statistiques": {
     "combatsGagnes": 0,
     "combatsPerdus": 0,

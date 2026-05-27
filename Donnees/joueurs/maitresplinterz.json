@@ -7,7 +7,7 @@
   "classe": "Algorythmancien",
   "sousClasseChoisie": false,
   "sousClasse": "",
-  "typeArme": "Luth",
+  "typeArme": "Luth-Code",
   "pvMax": 11,
   "pvActuels": 11,
   "classeArmure": 13,
@@ -27,6 +27,7 @@
   "queteCooldownFin": 0,
   "dernierCheckRencontre": 0,
   "reposCooldownFin": 0,
+  "queteEventsUsed": 0,
   "combatActuel": {
     "ennemiNom": "",
     "ennemiPVActuels": 0,
@@ -34,7 +35,10 @@
     "protectionActive": false,
     "tourCombat": 0
   },
-  "inventaire": [],
+  "inventaire": "",
+  "armeEquipee": "Luth-01",
+  "armureEquipee": "",
+  "accessoireEquipe": "",
   "statistiques": {
     "combatsGagnes": 0,
     "combatsPerdus": 0,

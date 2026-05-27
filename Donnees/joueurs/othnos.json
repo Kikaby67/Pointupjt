@@ -27,6 +27,7 @@
   "rencontreType": "",
   "dernierCheckRencontre": 1779742173,
   "reposCooldownFin": 1779740240,
+  "queteEventsUsed": 0,
   "combatActuel": {
     "ennemiNom": "Martre-Trojan",
     "ennemiPVActuels": 0,
@@ -34,7 +35,10 @@
     "protectionActive": false,
     "tourCombat": 18
   },
-  "inventaire": [],
+  "inventaire": "",
+  "armeEquipee": "Sceptre-de-L'Antre",
+  "armureEquipee": "",
+  "accessoireEquipe": "",
   "statistiques": {
     "combatsGagnes": 0,
     "combatsPerdus": 0,

@@ -7,7 +7,7 @@
   "classe": "Algorythmancien",
   "sousClasseChoisie": false,
   "sousClasse": "",
-  "typeArme": "Luth",
+  "typeArme": "Luth-Code",
   "pvMax": 23,
   "pvActuels": 23,
   "classeArmure": 15,
@@ -27,6 +27,7 @@
   "rencontreType": "",
   "dernierCheckRencontre": 1779742567,
   "reposCooldownFin": 1779740897,
+  "queteEventsUsed": 0,
   "combatActuel": {
     "ennemiNom": "Drone-racine",
     "ennemiPVActuels": 0,
@@ -34,7 +35,10 @@
     "protectionActive": false,
     "tourCombat": 9
   },
-  "inventaire": [],
+  "inventaire": "",
+  "armeEquipee": "Luth-01",
+  "armureEquipee": "",
+  "accessoireEquipe": "",
   "statistiques": {
     "combatsGagnes": 0,
     "combatsPerdus": 0,

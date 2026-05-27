@@ -27,6 +27,7 @@
   "rencontreType": "",
   "dernierCheckRencontre": 1779753130,
   "reposCooldownFin": 0,
+  "queteEventsUsed": 0,
   "combatActuel": {
     "ennemiNom": "Taupe-Malware",
     "ennemiPVActuels": 0,
@@ -34,7 +35,10 @@
     "protectionActive": false,
     "tourCombat": 15
   },
-  "inventaire": [],
+  "inventaire": "",
+  "armeEquipee": "Marteau-Carapace",
+  "armureEquipee": "",
+  "accessoireEquipe": "",
   "statistiques": {
     "combatsGagnes": 0,
     "combatsPerdus": 0,

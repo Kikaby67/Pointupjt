@@ -18,18 +18,63 @@ public class CPHInline
 
         string json = File.ReadAllText(cheminFichier);
 
+        // Message 1 : identité
+        int niveau = int.Parse(LireValeur(json, "niveau"));
+        int xp     = int.Parse(LireValeur(json, "experience"));
+        int ram    = int.Parse(LireValeur(json, "ram"));
+        CPH.SendMessage(nomJoueur + " | Niv " + niveau + " | XP : " + xp + " | RAM : " + ram);
+
+        // Message 2 : classe
         if (LireValeur(json, "classeChoisie") != "true")
         {
-            CPH.SendMessage(nomJoueur + ", choisis d'abord ta classe avec !choisirclasse !");
-            return true;
+            CPH.SendMessage(nomJoueur + " — Classe : aucune (tape !choisirclasse)");
+        }
+        else
+        {
+            string classe     = LireValeur(json, "classe");
+            string sousClasse = LireValeur(json, "sousClasse");
+            string typeArme   = LireValeur(json, "typeArme");
+            string msg2 = nomJoueur + " — Classe : " + classe;
+            if (sousClasse != "" && sousClasse != "0") msg2 += " / " + sousClasse;
+            msg2 += " | Arme : " + (typeArme != "" && typeArme != "0" ? typeArme : "aucune");
+            CPH.SendMessage(msg2);
         }
 
-		int nouvelleCA = int.Parse(LireValeur(json, "classeArmure")) + 2;
-		json = ModifierValeur(json, "classeArmure", nouvelleCA.ToString(), false);
-		string nomStat = "CA";
+        // Message 3 : stats combat
+        int pvActuels  = int.Parse(LireValeur(json, "pvActuels"));
+        int pvMax      = int.Parse(LireValeur(json, "pvMax"));
+        int ca         = int.Parse(LireValeur(json, "classeArmure"));
+        int atq        = int.Parse(LireValeur(json, "bonusAttaque"));
+        int manaActuels = int.Parse(LireValeur(json, "manaActuels"));
+        int manaMax    = int.Parse(LireValeur(json, "manaMax"));
+        int charisme   = int.Parse(LireValeur(json, "charisme"));
 
-        File.WriteAllText(cheminFichier, json);
-        CPH.SendMessage("Bravo !" + nomJoueur + "tu as gagner +2 dans " + nomStat + " !");
+        string msg3 = nomJoueur + " — PV : " + pvActuels + "/" + pvMax + " | CA : " + ca + " | Atq : +" + atq;
+        if (manaMax > 0) msg3 += " | Mana : " + manaActuels + "/" + manaMax;
+        if (charisme > 0) msg3 += " | Charisme : " + charisme;
+        CPH.SendMessage(msg3);
+
+        // Message 4 : stats + items équipés
+        int combatsGagnes   = int.Parse(LireValeur(json, "combatsGagnes"));
+        int combatsPerdus   = int.Parse(LireValeur(json, "combatsPerdus"));
+        int quetesTerminees = int.Parse(LireValeur(json, "quetesTerminees"));
+        bool enCombat = LireValeur(json, "enCombat") == "true";
+        bool enQuete  = LireValeur(json, "enQuete")  == "true";
+
+        string msg4 = nomJoueur + " — Combats : " + combatsGagnes + "V/" + combatsPerdus + "D | Quêtes : " + quetesTerminees;
+        if (enCombat) msg4 += " | EN COMBAT";
+        else if (enQuete) msg4 += " | EN QUETE";
+
+        string armeEq   = LireValeur(json, "armeEquipee");
+        string armureEq = LireValeur(json, "armureEquipee");
+        string accEq    = LireValeur(json, "accessoireEquipe");
+        string equipe   = "";
+        if (armeEq   != "" && armeEq   != "0") equipe += " Arme:" + armeEq;
+        if (armureEq != "" && armureEq != "0") equipe += " Armure:" + armureEq;
+        if (accEq    != "" && accEq    != "0") equipe += " Acc:" + accEq;
+        if (equipe   != "") msg4 += " |" + equipe;
+
+        CPH.SendMessage(msg4);
         return true;
     }
 
@@ -41,17 +86,5 @@ public class CPHInline
         posDebut       += marqueur.Length;
         int posFin      = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
         return json.Substring(posDebut, posFin - posDebut).Trim().Trim('"');
-    }
-
-    private string ModifierValeur(string json, string cle, string val, bool estTexte)
-    {
-        string marqueur = "\"" + cle + "\": ";
-        int posDebut    = json.IndexOf(marqueur);
-        if (posDebut == -1) return json;
-        posDebut       += marqueur.Length;
-        int posFin      = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
-        string ancienne = json.Substring(posDebut, posFin - posDebut);
-        string nouvelle = estTexte ? "\"" + val + "\"" : val;
-        return json.Substring(0, posDebut) + nouvelle + json.Substring(posDebut + ancienne.Length);
     }
 }

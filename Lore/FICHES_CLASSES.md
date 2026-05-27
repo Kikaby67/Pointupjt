@@ -73,7 +73,7 @@
 | Mana | 5 | fixe |
 | Charisme | 11 | fixe |
 | Bonus Attaque | 0 | + 1d4 (+1 à +4) |
-| Arme | Dual-Dagues | fixe |
+| Arme | Double-Dagues | fixe |
 | Dé de dégâts | 1d6 + 1d6 | 2 attaques par tour |
 
 ### Actions disponibles
@@ -96,7 +96,7 @@
 
 #### 🎯 Pointeur-Null
 *Le Pointeur-Null pointe vers ce qui n'existe pas — et provoque un crash. Arc en main, le Cryptolame efface ses traces et tire depuis les nœuds du réseau que personne ne surveille. Chaque flèche est une référence non résolue, fatale à l'impact.*
-- Arme passe à **Arc** (typeArme = Arc)
+- Arme passe à **Arc-Binaire** (typeArme = Arc-Binaire)
 - Dé de dégâts : **1d10** (une seule attaque par tour)
 
 ---

@@ -6,11 +6,12 @@ public class CPHInline
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
     private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
+    private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
 
     public bool Execute()
     {
-        string nomJoueur = args["user"].ToString();
-        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, $"{nomJoueur}.json");
+        string nomJoueur     = args["user"].ToString();
+        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, nomJoueur.ToLower() + ".json");
 
         if (!File.Exists(cheminFichier))
         {
@@ -26,17 +27,18 @@ public class CPHInline
             return true;
         }
 
-        string classe    = LireValeur(json, "classe");
+        string classe     = LireValeur(json, "classe");
         string sousClasse = LireValeur(json, "sousClasse");
-        string ennemNom  = LireValeur(json, "ennemiNom");
-        int joueurPV     = int.Parse(LireValeur(json, "pvActuels"));
-        int joueurPVMax  = int.Parse(LireValeur(json, "pvMax"));
-        int joueurCA     = int.Parse(LireValeur(json, "classeArmure"));
-        int mana         = int.Parse(LireValeur(json, "manaActuels"));
-        int tour         = int.Parse(LireValeur(json, "tourCombat"));
+        string ennemNom   = LireValeur(json, "ennemiNom");
+        int joueurPV      = int.Parse(LireValeur(json, "pvActuels"));
+        int joueurPVMax   = int.Parse(LireValeur(json, "pvMax"));
+        int joueurCA      = int.Parse(LireValeur(json, "classeArmure"));
+        int caItemBonus   = GetBonusItems(json, "caBonus");
+        int mana          = int.Parse(LireValeur(json, "manaActuels"));
+        int tour          = int.Parse(LireValeur(json, "tourCombat"));
 
-        int[] ennemStats = GetEnnemiStats(ennemNom);
-        int ennemDiceMax = ennemStats[1];
+        int[] ennemStats  = GetEnnemiStats(ennemNom);
+        int ennemDiceMax  = ennemStats[1];
 
         Random rng = new Random();
         string msgSoin;
@@ -48,29 +50,30 @@ public class CPHInline
         }
         else
         {
-            int soinRoll = RollSoin(classe, sousClasse, rng);
-            int nouveauPV = Math.Min(joueurPV + soinRoll, joueurPVMax);
+            int soinRoll       = RollSoin(classe, sousClasse, rng);
+            int nouveauPV      = Math.Min(joueurPV + soinRoll, joueurPVMax);
             int soinsEffectifs = nouveauPV - joueurPV;
-            json = ModifierValeur(json, "pvActuels", nouveauPV.ToString(), false);
+            json = ModifierValeur(json, "pvActuels",   nouveauPV.ToString(),  false);
             json = ModifierValeur(json, "manaActuels", (mana - 5).ToString(), false);
             joueurPV = nouveauPV;
             msgSoin = nomJoueur + " se soigne +" + soinsEffectifs + " PV → " + joueurPV + "/" + joueurPVMax + " PV (" + (mana - 5) + " mana restant)";
         }
 
         // === RIPOSTE DE L'ENNEMI (toujours, même si soin raté) ===
-        int d20Ennemi = rng.Next(1, 21);
-        bool ennemiTouche = d20Ennemi >= joueurCA;
+        int    joueurCAEff  = joueurCA + caItemBonus;
+        int    d20Ennemi    = rng.Next(1, 21);
+        bool   ennemiTouche = d20Ennemi >= joueurCAEff;
         string msgRiposte;
         if (ennemiTouche)
         {
             int degatsEnnemi = rng.Next(1, ennemDiceMax + 1);
             joueurPV = Math.Max(0, joueurPV - degatsEnnemi);
             json = ModifierValeur(json, "pvActuels", joueurPV.ToString(), false);
-            msgRiposte = ennemNom + " profite de l'ouverture (d20: " + d20Ennemi + " vs CA " + joueurCA + ") → TOUCHÉ ! -" + degatsEnnemi + " PV → " + nomJoueur + " : " + joueurPV + "/" + joueurPVMax + " PV";
+            msgRiposte = ennemNom + " profite de l'ouverture (d20: " + d20Ennemi + " vs CA " + joueurCAEff + ") → TOUCHÉ ! -" + degatsEnnemi + " PV → " + nomJoueur + " : " + joueurPV + "/" + joueurPVMax + " PV";
         }
         else
         {
-            msgRiposte = ennemNom + " tente de frapper pendant le soin (d20: " + d20Ennemi + " vs CA " + joueurCA + ") → RATÉ !";
+            msgRiposte = ennemNom + " tente de frapper pendant le soin (d20: " + d20Ennemi + " vs CA " + joueurCAEff + ") → RATÉ !";
         }
 
         // === DÉFAITE ? ===
@@ -91,6 +94,20 @@ public class CPHInline
         CPH.SendMessage(msgSoin);
         CPH.SendMessage(msgRiposte);
         return true;
+    }
+
+    private int GetBonusItems(string json, string stat)
+    {
+        string   cfgItems = File.ReadAllText(CONFIG_ITEMS);
+        string[] slots    = { "armeEquipee", "armureEquipee", "accessoireEquipe" };
+        int total = 0;
+        foreach (string slot in slots)
+        {
+            string item = LireValeur(json, slot);
+            if (item != "" && item != "0")
+                total += int.Parse(LireValeur(cfgItems, item + "_" + stat));
+        }
+        return total;
     }
 
     private int RollSoin(string classe, string sousClasse, Random rng)
@@ -120,20 +137,20 @@ public class CPHInline
     private string LireValeur(string json, string cle)
     {
         string marqueur = "\"" + cle + "\": ";
-        int posDebut = json.IndexOf(marqueur);
+        int posDebut    = json.IndexOf(marqueur);
         if (posDebut == -1) return "0";
-        posDebut += marqueur.Length;
-        int posFin = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
+        posDebut       += marqueur.Length;
+        int posFin      = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
         return json.Substring(posDebut, posFin - posDebut).Trim().Trim('"');
     }
 
     private string ModifierValeur(string json, string cle, string val, bool estTexte)
     {
         string marqueur = "\"" + cle + "\": ";
-        int posDebut = json.IndexOf(marqueur);
+        int posDebut    = json.IndexOf(marqueur);
         if (posDebut == -1) return json;
-        posDebut += marqueur.Length;
-        int posFin = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
+        posDebut       += marqueur.Length;
+        int posFin      = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
         string ancienne = json.Substring(posDebut, posFin - posDebut);
         string nouvelle = estTexte ? "\"" + val + "\"" : val;
         return json.Substring(0, posDebut) + nouvelle + json.Substring(posDebut + ancienne.Length);

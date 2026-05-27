@@ -36,6 +36,12 @@ public class CPHInline
             return true;
         }
 
+        if (int.Parse(LireValeur(json, "pvActuels")) <= 0)
+        {
+            CPH.SendMessage(nomJoueur + ", tu récupères de ta défaite dans l'Antre de Pointu — impossible de te soigner maintenant !");
+            return true;
+        }
+
         long maintenant  = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         long cooldownFin = long.Parse(LireValeur(json, "reposCooldownFin"));
 

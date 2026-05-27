@@ -13,7 +13,7 @@
   "classeArmure": 19,
   "bonusAttaque": 2,
   "manaMax": 5,
-  "manaActuels": 3,
+  "manaActuels": 5,
   "charisme": 8,
   "enCombat": false,
   "enQuete": false,
@@ -27,6 +27,7 @@
   "queteCooldownFin": 0,
   "dernierCheckRencontre": 1779751949,
   "reposCooldownFin": 1779506222,
+  "queteEventsUsed": 0,
   "combatActuel": {
     "ennemiNom": "Parasite de données",
     "ennemiPVActuels": 0,
@@ -34,7 +35,10 @@
     "protectionActive": false,
     "tourCombat": 9
   },
-  "inventaire": [],
+  "inventaire": "",
+  "armeEquipee": "Lame-de-Pointu",
+  "armureEquipee": "",
+  "accessoireEquipe": "",
   "statistiques": {
     "combatsGagnes": 0,
     "combatsPerdus": 0,

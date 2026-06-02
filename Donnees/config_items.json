@@ -1,5 +1,6 @@
 {
     "Lame-de-Pointu_slot": "arme",
+    "Lame-de-Pointu_rarete": "commun",
     "Lame-de-Pointu_attaqueBonus": 2,
     "Lame-de-Pointu_manaBonus": 0,
     "Lame-de-Pointu_charismeBonus": 0,
@@ -8,6 +9,7 @@
     "Lame-de-Pointu_description": "Lame taillée dans un fragment de carapace ancienne. Légère et tranchante. +2 attaque",
 
     "Croc-de-Loup_slot": "arme",
+    "Croc-de-Loup_rarete": "commun",
     "Croc-de-Loup_attaqueBonus": 2,
     "Croc-de-Loup_manaBonus": 0,
     "Croc-de-Loup_charismeBonus": 0,
@@ -16,6 +18,7 @@
     "Croc-de-Loup_description": "Paire de lames arrachées d'un Loup-Firewall vaincu. Rapides et précises. +2 attaque",
 
     "Sceptre-de-L'Antre_slot": "arme",
+    "Sceptre-de-L'Antre_rarete": "commun",
     "Sceptre-de-L'Antre_attaqueBonus": 2,
     "Sceptre-de-L'Antre_manaBonus": 5,
     "Sceptre-de-L'Antre_charismeBonus": 0,
@@ -24,6 +27,7 @@
     "Sceptre-de-L'Antre_description": "Bâton sculpté dans le bois d'un chêne-serveur de l'Antre de Pointu. +2 attaque · +5 mana",
 
     "Marteau-Carapace_slot": "arme",
+    "Marteau-Carapace_rarete": "commun",
     "Marteau-Carapace_attaqueBonus": 1,
     "Marteau-Carapace_manaBonus": 0,
     "Marteau-Carapace_charismeBonus": 1,
@@ -32,6 +36,7 @@
     "Marteau-Carapace_description": "Marteau forgé à partir d'un fragment de carapace ancienne. Lourd et immuable. +1 attaque · +1 charisme",
 
     "Luth-01_slot": "arme",
+    "Luth-01_rarete": "commun",
     "Luth-01_attaqueBonus": 0,
     "Luth-01_manaBonus": 0,
     "Luth-01_charismeBonus": 1,
@@ -40,6 +45,7 @@
     "Luth-01_description": "Premier prototype de Luth algorithmique. Ses vibrations alignent les circuits alliés. +1 charisme",
 
     "Arc-Fleau_slot": "arme",
+    "Arc-Fleau_rarete": "commun",
     "Arc-Fleau_attaqueBonus": 3,
     "Arc-Fleau_manaBonus": 0,
     "Arc-Fleau_charismeBonus": 0,
@@ -48,6 +54,7 @@
     "Arc-Fleau_description": "Arc taillé dans un nœud de réseau corrompu. Chaque flèche est une requête fatale. +3 attaque",
 
     "Armure-d'ecorce_slot": "armure",
+    "Armure-d'ecorce_rarete": "commun",
     "Armure-d'ecorce_attaqueBonus": 0,
     "Armure-d'ecorce_manaBonus": 0,
     "Armure-d'ecorce_caBonus": 2,
@@ -56,6 +63,7 @@
     "Armure-d'ecorce_description": "Armure taillée dans l'écorce d'un chêne-serveur. Légère et vivante. +2 CA · +2 charisme",
 
     "Armure-de-feuille_slot": "armure",
+    "Armure-de-feuille_rarete": "commun",
     "Armure-de-feuille_attaqueBonus": 0,
     "Armure-de-feuille_manaBonus": 0,
     "Armure-de-feuille_caBonus": 1,
@@ -64,6 +72,7 @@
     "Armure-de-feuille_description": "Armure tissée de feuilles-données d'Arbonet. Légère, discrète. +1 CA · +1 charisme",
 
     "Robe-de-code_slot": "armure",
+    "Robe-de-code_rarete": "commun",
     "Robe-de-code_attaqueBonus": 0,
     "Robe-de-code_manaBonus": 5,
     "Robe-de-code_caBonus": 1,
@@ -72,6 +81,7 @@
     "Robe-de-code_description": "Robe tissée de lignes de code source. Amplificateur de flux magique. +5 mana · +1 CA",
 
     "Apparat-Système_slot": "armure",
+    "Apparat-Système_rarete": "commun",
     "Apparat-Système_attaqueBonus": 0,
     "Apparat-Système_manaBonus": 0,
     "Apparat-Système_caBonus": 2,
@@ -80,6 +90,7 @@
     "Apparat-Système_description": "Tenue de cérémonie du réseau. Imposante et bien protégée. +2 CA · +1 charisme",
 
     "Armure-renforcée_slot": "armure",
+    "Armure-renforcée_rarete": "commun",
     "Armure-renforcée_attaqueBonus": 0,
     "Armure-renforcée_manaBonus": 0,
     "Armure-renforcée_caBonus": 3,
@@ -88,6 +99,7 @@
     "Armure-renforcée_description": "Armure lourde forgée dans du silicium brut. Indestructible. +3 CA",
 
     "Bague-de-protection_slot": "accessoire",
+    "Bague-de-protection_rarete": "commun",
     "Bague-de-protection_attaqueBonus": 0,
     "Bague-de-protection_manaBonus": 0,
     "Bague-de-protection_caBonus": 1,
@@ -96,6 +108,7 @@
     "Bague-de-protection_description": "Bague gravée de runes de protection. Discrète mais efficace. +1 CA",
 
     "Cape-de-furtivité_slot": "accessoire",
+    "Cape-de-furtivité_rarete": "commun",
     "Cape-de-furtivité_attaqueBonus": 0,
     "Cape-de-furtivité_manaBonus": 0,
     "Cape-de-furtivité_caBonus": 0,
@@ -104,6 +117,7 @@
     "Cape-de-furtivité_description": "Cape tissée de paquets chiffrés. Rend son porteur insaisissable. +2 charisme",
 
     "Amulette-de-mana_slot": "accessoire",
+    "Amulette-de-mana_rarete": "commun",
     "Amulette-de-mana_attaqueBonus": 0,
     "Amulette-de-mana_manaBonus": 5,
     "Amulette-de-mana_caBonus": 0,
@@ -112,6 +126,7 @@
     "Amulette-de-mana_description": "Amulette cristallisée autour d'un nœud de mana pur. +5 mana",
 
     "Gants-de-force_slot": "accessoire",
+    "Gants-de-force_rarete": "commun",
     "Gants-de-force_attaqueBonus": 2,
     "Gants-de-force_manaBonus": 0,
     "Gants-de-force_caBonus": 0,
@@ -120,6 +135,7 @@
     "Gants-de-force_description": "Gants renforcés de fils de données compressés. Décuplent la puissance. +2 attaque",
 
     "Chapeau-de-charisme_slot": "accessoire",
+    "Chapeau-de-charisme_rarete": "commun",
     "Chapeau-de-charisme_attaqueBonus": 0,
     "Chapeau-de-charisme_manaBonus": 0,
     "Chapeau-de-charisme_caBonus": 0,
@@ -127,17 +143,59 @@
     "Chapeau-de-charisme_prixVente": 120,
     "Chapeau-de-charisme_description": "Chapeau d'apparat du réseau. Impose le respect dans toute Arbonet. +3 charisme",
 
-    "Potion-Recharge_slot": "consommable",
-    "Potion-Recharge_pvSoin": 8,
-    "Potion-Recharge_manaSoin": 10,
-    "Potion-Recharge_prixVente": 30,
-    "Potion-Recharge_description": "Fiole de résine d'Arbonet. Restaure 8 PV et 10 mana. (!utiliser)",
+    "Potion_slot": "consommable",
+    "Potion_rarete": "commun",
+    "Potion_pvSoin": 8,
+    "Potion_manaSoin": 10,
+    "Potion_prixVente": 3,
+    "Potion_description": "Fiole de résine d'Arbonet. Restaure 8 PV et 10 mana. (!utiliser)",
 
     "Morceau-Arbre-Serveur_slot": "vente",
+    "Morceau-Arbre-Serveur_rarete": "commun",
     "Morceau-Arbre-Serveur_prixVente": 50,
     "Morceau-Arbre-Serveur_description": "Fragment de chêne-serveur arraché lors d'une rencontre. Aucune utilité directe — mais les marchands d'Arbonet en raffollent.",
 
     "Ligne-Reseau_slot": "vente",
+    "Ligne-Reseau_rarete": "commun",
     "Ligne-Reseau_prixVente": 25,
-    "Ligne-Reseau_description": "Câble de données d'Arbonet récupéré sur la route. À vendre uniquement."
+    "Ligne-Reseau_description": "Câble de données d'Arbonet récupéré sur la route. À vendre uniquement.",
+
+    "Ecorce-R_slot": "vente",
+    "Ecorce-R_rarete": "commun",
+    "Ecorce-R_prixVente": 5,
+    "Ecorce-R_description": "Écorce gravée d'un 'R'. Fragment d'un message oublié dans la forêt...",
+
+    "Ecorce-A_slot": "vente",
+    "Ecorce-A_rarete": "commun",
+    "Ecorce-A_prixVente": 5,
+    "Ecorce-A_description": "Écorce gravée d'un 'A'. La forêt d'Arbonet garde ses secrets.",
+
+    "Ecorce-C_slot": "vente",
+    "Ecorce-C_rarete": "commun",
+    "Ecorce-C_prixVente": 5,
+    "Ecorce-C_description": "Écorce gravée d'un 'C'. Quelqu'un a laissé un indice sur sa route.",
+
+    "Ecorce-I_slot": "vente",
+    "Ecorce-I_rarete": "commun",
+    "Ecorce-I_prixVente": 5,
+    "Ecorce-I_description": "Écorce gravée d'un 'I'. Un signe parmi d'autres, peut-être.",
+
+    "Ecorce-N_slot": "vente",
+    "Ecorce-N_rarete": "commun",
+    "Ecorce-N_prixVente": 5,
+    "Ecorce-N_description": "Écorce gravée d'un 'N'. Le réseau murmure quelque chose.",
+
+    "Ecorce-E_slot": "vente",
+    "Ecorce-E_rarete": "commun",
+    "Ecorce-E_prixVente": 5,
+    "Ecorce-E_description": "Écorce gravée d'un 'E'. Le dernier fragment ? Ou le premier ?",
+
+    "Ecaille-de-Pointu_slot": "accessoire",
+    "Ecaille-de-Pointu_rarete": "legendaire",
+    "Ecaille-de-Pointu_attaqueBonus": 3,
+    "Ecaille-de-Pointu_caBonus": 2,
+    "Ecaille-de-Pointu_manaBonus": 5,
+    "Ecaille-de-Pointu_charismeBonus": 2,
+    "Ecaille-de-Pointu_prixVente": 999,
+    "Ecaille-de-Pointu_description": "Fragment de la carapace millénaire de Pointu. Unique au monde. +3 attaque · +2 CA"
 }

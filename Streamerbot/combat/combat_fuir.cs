@@ -6,6 +6,7 @@ public class CPHInline
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
     private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
@@ -38,7 +39,10 @@ public class CPHInline
         int[] ennemStats = GetEnnemiStats(ennemNom);
         int ennemDiceMax = ennemStats[1];
 
-        int seuilFuite = (classe == "Cryptolame") ? 8 : 12;
+        string cfgG    = File.ReadAllText(CONFIG_GLOBAL);
+        int seuilNormal = int.Parse(LireValeur(cfgG, "combat_fuite_seuil_normal"));
+        int seuilCrypto = int.Parse(LireValeur(cfgG, "combat_fuite_seuil_cryptolame"));
+        int seuilFuite  = (classe == "Cryptolame") ? seuilCrypto : seuilNormal;
 
         Random rng = new Random();
         int d20 = rng.Next(1, 21);
@@ -125,10 +129,14 @@ public class CPHInline
 
     private int[] GetEnnemiStats(string nom)
     {
-        string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfg  = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
         int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
         int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
-        return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
+        return new int[] {
+            ca        != 0 ? ca        : int.Parse(LireValeur(cfgG, "ennemi_ca_defaut")),
+            degatsMax != 0 ? degatsMax : int.Parse(LireValeur(cfgG, "ennemi_degats_defaut"))
+        };
     }
 
     private string AjouterValeur(string json, string cle, int montant)

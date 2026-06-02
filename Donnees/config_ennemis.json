@@ -29,15 +29,15 @@
   "Martre-Trojan_xp": 20,
   "Martre-Trojan_ram": 4,
 
-  "Sentinelle du Castor_pv": 25,
+  "Sentinelle du Castor_pv": 20,
   "Sentinelle du Castor_ca": 14,
-  "Sentinelle du Castor_degatsMax": 6,
+  "Sentinelle du Castor_degatsMax": 4,
   "Sentinelle du Castor_xp": 30,
   "Sentinelle du Castor_ram": 6,
 
-  "Ombre de la mémoire_pv": 20,
+  "Ombre de la mémoire_pv": 18,
   "Ombre de la mémoire_ca": 11,
-  "Ombre de la mémoire_degatsMax": 8,
+  "Ombre de la mémoire_degatsMax": 6,
   "Ombre de la mémoire_xp": 25,
   "Ombre de la mémoire_ram": 5,
 
@@ -54,14 +54,20 @@
   "Parasite de données_ram": 4,
 
   "Sanglier-Crash_pv": 35,
-  "Sanglier-Crash_ca": 9,
+  "Sanglier-Crash_ca": 6,
   "Sanglier-Crash_degatsMax": 8,
   "Sanglier-Crash_xp": 22,
   "Sanglier-Crash_ram": 5,
 
   "Taupe-Malware_pv": 22,
   "Taupe-Malware_ca": 13,
-  "Taupe-Malware_degatsMax": 6,
+  "Taupe-Malware_degatsMax": 2,
   "Taupe-Malware_xp": 20,
-  "Taupe-Malware_ram": 4
+  "Taupe-Malware_ram": 4,
+
+  "vieux_sage_pv": 100,
+  "vieux_sage_ca": 20,
+  "vieux_sage_degatsMax": 16,
+  "vieux_sage_xp": 30,
+  "vieux_sage_ram": 100
 }

@@ -8,6 +8,7 @@ public class CPHInline
     private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
     private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
     private const string CONFIG_LEVEL    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_level.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
@@ -37,7 +38,6 @@ public class CPHInline
         int joueurCA       = int.Parse(LireValeur(json, "classeArmure"));
         int bonusAttaque   = int.Parse(LireValeur(json, "bonusAttaque"));
         bool buffActif     = LireValeur(json, "buffActif") == "true";
-        int bonusTotal       = bonusAttaque + (buffActif ? 2 : 0);
         int degatsItemBonus  = GetBonusItems(json, "attaqueBonus");
         int caItemBonus      = GetBonusItems(json, "caBonus");
         int tour             = int.Parse(LireValeur(json, "tourCombat"));
@@ -57,6 +57,12 @@ public class CPHInline
         int nbAtq     = (sousClasse != "") ? int.Parse(LireValeur(cfgCls, sousClasse + "_nbAttaques")) : 0;
         if (nbAtq    == 0) nbAtq = int.Parse(LireValeur(cfgCls, classe + "_nbAttaques"));
         if (nbAtq    == 0) nbAtq = 1;
+
+        int chefDiv = sousClasse != "" ? int.Parse(LireValeur(cfgCls, sousClasse + "_bonusCharisme")) : 0;
+        if (chefDiv == 0) chefDiv = int.Parse(LireValeur(cfgCls, classe + "_bonusCharisme"));
+        int charismeTotal = int.Parse(LireValeur(json, "charisme")) + GetBonusItems(json, "charismeBonus");
+        int bonusCharisme = chefDiv > 0 ? charismeTotal / chefDiv : 0;
+        int bonusTotal    = bonusAttaque + (buffActif ? 2 : 0) + bonusCharisme;
 
         if (nbAtq > 1)
         {
@@ -170,13 +176,14 @@ public class CPHInline
 
     private int RollDegats(string classe, string sousClasse, Random rng)
     {
-        string cfg = File.ReadAllText(CONFIG_CLASSES);
-        string key = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "0"
-                     ? sousClasse : classe;
+        string cfg  = File.ReadAllText(CONFIG_CLASSES);
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
+        string key  = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "0"
+                      ? sousClasse : classe;
         int degatsMax = int.Parse(LireValeur(cfg, key + "_degatsMax"));
         int nbDes     = int.Parse(LireValeur(cfg, key + "_nbDes"));
-        if (degatsMax == 0) degatsMax = 8;
-        if (nbDes     == 0) nbDes     = 1;
+        if (degatsMax == 0) degatsMax = int.Parse(LireValeur(cfgG, "attaque_degats_defaut"));
+        if (nbDes     == 0) nbDes     = int.Parse(LireValeur(cfgG, "attaque_des_defaut"));
         int total = 0;
         for (int i = 0; i < nbDes; i++) total += rng.Next(1, degatsMax + 1);
         return total;
@@ -184,18 +191,26 @@ public class CPHInline
 
     private int[] GetEnnemiStats(string nom)
     {
-        string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfg  = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
         int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
         int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
-        return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
+        return new int[] {
+            ca        != 0 ? ca        : int.Parse(LireValeur(cfgG, "ennemi_ca_defaut")),
+            degatsMax != 0 ? degatsMax : int.Parse(LireValeur(cfgG, "ennemi_degats_defaut"))
+        };
     }
 
     private int[] GetRecompensesEnnemi(string nom)
     {
-        string cfg = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfg  = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
         int xp  = int.Parse(LireValeur(cfg, nom + "_xp"));
         int ram = int.Parse(LireValeur(cfg, nom + "_ram"));
-        return new int[] { xp != 0 ? xp : 15, ram != 0 ? ram : 3 };
+        return new int[] {
+            xp  != 0 ? xp  : int.Parse(LireValeur(cfgG, "ennemi_xp_defaut")),
+            ram != 0 ? ram : int.Parse(LireValeur(cfgG, "ennemi_ram_defaut"))
+        };
     }
 
     private string VerifierMonteeNiveau(string json, string nomJoueur)

@@ -34,7 +34,11 @@ Pointu-PJT/
 │   │   ├── Inventaire/          # !inventaire
 │   │   ├── Equiper/             # !equiper
 │   │   ├── Vendre/              # !vendre
-│   │   └── Utiliser/            # !utiliser
+│   │   ├── Utiliser/            # !utiliser
+│   │   ├── Abandon/             # !abandon
+│   │   ├── Accepter/            # !accepter
+│   │   ├── Refuser/             # !refuser
+│   │   └── Secret/              # !racine (commande secrète)
 │   ├── quetes/
 │   │   ├── quest_system.cs      # !quete (lancer / consulter)
 │   │   └── quest_timer.cs       # Timer QuestCheck (30s, auto-résolution + rencontres)
@@ -53,6 +57,11 @@ Pointu-PJT/
 │   ├── config_classes.json      # ★ Source unique : stats classes + sous-classes
 │   ├── config_ennemis.json      # ★ Source unique : stats tous les ennemis
 │   ├── config_items.json        # ★ Source unique : stats tous les items
+│   ├── config_quetes.json       # ★ Source unique : quêtes (format quete001_*)
+│   ├── config_global.json       # ★ Source unique : constantes de jeu (cooldowns, %, seuils)
+│   ├── config_level.json        # ★ Source unique : seuils XP et bonus de niveau
+│   ├── config_allies.json       # ★ Source unique : paramètres alliés/marchands
+│   ├── secret_recu.txt          # Liste des joueurs ayant reçu l'Ecaille-de-Pointu
 │   └── etat_global.json         # Rencontre manuelle active (streamer)
 ├── Lore/
 │   ├── LA_LEGENDE_DE_POINTU_V2.md
@@ -134,9 +143,56 @@ estTexte = true  → chaînes de texte (classe, queteId, ennemiNom...)
 
 ## Architecture config — Source unique de vérité
 
-Toutes les stats de classe, sous-classe et ennemi vivent dans **deux fichiers JSON**.
-Le code ne contient aucun `switch (classe)` ni `if (sousClasse == "X")` pour les valeurs numériques.
-Pour rééquilibrer : modifier le JSON uniquement.
+Toutes les stats et constantes vivent dans des **fichiers JSON** — jamais dans le code.
+Pour rééquilibrer le jeu : modifier le JSON uniquement, zéro code à toucher.
+
+### `config_global.json` — Constantes de jeu
+
+```
+max_sac                        ← taille max de l'inventaire (8)
+repos_cooldown_secondes        ← cooldown !repos (1800 = 30 min)
+combat_mana_cout_soin          ← coût mana de !soin (5)
+combat_defense_bonus_ca        ← bonus CA de !defense ce tour (3)
+combat_fuite_seuil_normal      ← d20 minimum pour fuir (12)
+combat_fuite_seuil_cryptolame  ← d20 minimum pour fuir en Cryptolame (8)
+quete_taux_echec               ← % d'échec de quête (20)
+quete_chance_rencontre         ← % de rencontre toutes les 3 min (40)
+quete_chance_loot_artefact     ← % de loot sur quête artefact (70)
+quete_chance_ecorce            ← % de drop morceau d'écorce (20)
+quete_cooldown_defaite_secondes ← cooldown après défaite en quête (600 = 10 min)
+quete_cooldown_abandon_secondes ← cooldown après !abandon (300 = 5 min)
+timer_xp_gain                  ← XP gagnés toutes les 15 min (5)
+timer_regen_pv                 ← PV régénérés toutes les 15 min hors combat (2)
+timer_regen_mana               ← Mana régénéré toutes les 15 min hors combat (3)
+
+ennemi_ca_defaut               ← CA de repli si absent du config (12)
+ennemi_degats_defaut           ← Dégâts de repli si absent du config (6)
+ennemi_xp_defaut               ← XP de repli si absent du config (15)
+ennemi_ram_defaut              ← RAM de repli si absent du config (3)
+attaque_degats_defaut          ← Dégâts max de repli (8)
+attaque_des_defaut             ← Nombre de dés de repli (1)
+soin_max_defaut                ← Soin max de repli (4)
+```
+
+### `config_quetes.json` — Format quêtes
+
+Clés format numéroté : `"quete001_champ": valeur` (quete001 à quete099)
+
+```
+_id          ← identifiant interne stocké dans le JSON joueur (ex: "artefact_01")
+_type        ← "artefact" | "service" | "entretien" (détermine le loot)
+_nom         ← nom court affiché dans le chat
+_demandeur   ← NPC qui donne la quête (ex: "Pointu", "Aldric le Marchand")
+_description ← description complète
+_ticks       ← durée en ticks (1 tick = 5 min réelles)
+_xp          ← XP récompense
+_ram         ← RAM récompense
+```
+
+**Énumération dynamique** : `quest_system.cs` scanne `quete001` → `quete099` jusqu'à `_id == ""`.
+Ajouter une quête = ajouter un bloc dans le JSON, **aucun code à toucher**.
+
+**`GetQueteData(id)` retourne** : `[0]=nom [1]=ticks [2]=xp [3]=ram [4]=demandeur [5]=type`
 
 ### `config_classes.json`
 
@@ -593,11 +649,49 @@ Trigger : Command Triggered → !vendre
 ### `!utiliser [nom_item]` → `Commandes/Utiliser/commande_utiliser.cs`
 Consomme un item du sac (`_slot == "consommable"`).
 - Lit `_pvSoin` et `_manaSoin` depuis config, applique plafonnés à pvMax/manaMax
-- Retire l'item du sac après usage
+- Retire **un seul** exemplaire du sac (flag `dejaRetire`)
 - Fonctionne en et hors combat
 - Cache le message mana si `manaMax == 0`
 ```
 Trigger : Command Triggered → !utiliser
+```
+
+### `!abandon` → `Commandes/Abandon/commande_abandon.cs`
+Abandonne la quête en cours.
+- Bloqué si `enCombat == true` (fuir ou se battre d'abord)
+- Réinitialise tous les champs quête (rencontre, pause, offres, events)
+- Applique `quete_cooldown_abandon_secondes` (config_global, 5 min par défaut)
+- Plus court que le cooldown de défaite (10 min) mais quand même pénalisant
+```
+Trigger : Command Triggered → !abandon
+```
+
+### `!racine` → `Commandes/Secret/commande_secret.cs`
+Commande secrète — **non documentée dans le jeu**.
+- Donne `Ecaille-de-Pointu` (meilleur accessoire : +3 atq, +2 CA)
+- Une seule fois par joueur (suivi dans `Donnees/secret_recu.txt`)
+- Le mot `racine` se reconstitue via 6 morceaux d'écorce (Ecorce-R/A/C/I/N/E)
+- Les écorces droppent aléatoirement en quête (20%, lettres manquantes seulement)
+```
+Trigger : Command Triggered → !racine
+```
+
+### `!classement` → `Commandes/Classement/commande_classement.cs`
+Affiche le top 5 des aventuriers — **broadcaster uniquement** (lu depuis `config_global.json → broadcaster`).
+- Scanne tous les joueurs avec `classeChoisie == true`
+- Trie par XP décroissant (tri à bulles)
+- Affiche : rang · pseudo · niveau · XP · victoires combat · quêtes terminées
+- 1 message d'en-tête + 1 message par joueur (max 6 messages)
+```
+Trigger : Command Triggered → !classement
+```
+
+### `!accepter` / `!refuser` → `Commandes/Accepter|Refuser/`
+Répondent aux offres interactives en quête (Vieux Sage → XP, Marchand → soins).
+- Vérifient `offreEnAttente` et `offreExpire`
+- `!accepter` applique l'effet, `!refuser` annule silencieusement
+```
+Trigger : Command Triggered → !accepter / !refuser
 ```
 
 ### Channel Point Rewards
@@ -634,13 +728,18 @@ Trigger : Manuel (bouton Streamer.bot)
 ## Checklist pour écrire un nouveau fichier
 
 1. `using System;` + `using System.IO;` en tête
-2. Constantes en tête :
+2. Constantes en tête (selon besoin) :
    ```csharp
    private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
    private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
    private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
    private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
+   private const string CONFIG_QUETES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_quetes.json";
+   private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
+   private const string CONFIG_LEVEL    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_level.json";
+   private const string CONFIG_ALLIES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_allies.json";
    ```
+   > ⚠️ **Ne jamais hardcoder** de valeurs numériques de jeu — lire depuis `config_global.json`.
 3. Vérifier `File.Exists(cheminFichier)` en premier → message + `return true`
 4. Vérifier `classeChoisie == "true"` avant toute action de jeu
 5. Vérifier `enCombat` et `enQuete` selon la logique
@@ -699,9 +798,11 @@ _prixVente
 | Bouclier-binaire | armure | +1 CA | 15 RAM |
 | Bague-de-protection | accessoire | +1 CA | 15 RAM |
 | Gants-de-force | accessoire | +1 atq | 15 RAM |
-| Potion-Recharge | consommable | +15 PV, +5 Mana | 10 RAM |
-| Morceau-Arbre-Serveur | vente | — | 20 RAM |
-| Ligne-Reseau | vente | — | 15 RAM |
+| Potion | consommable | +8 PV, +10 Mana | 3 RAM |
+| Morceau-Arbre-Serveur | vente | — | 50 RAM |
+| Ligne-Reseau | vente | — | 25 RAM |
+| Ecorce-R/A/C/I/N/E | vente | — | 5 RAM | Fragment lore (→ !racine) |
+| Ecaille-de-Pointu | accessoire | +3 atq, +2 CA | 999 RAM | Item secret unique |
 
 ### Inventaire joueur
 - Champ `inventaire` : CSV entre guillemets (`"item1,item2,item3"`)

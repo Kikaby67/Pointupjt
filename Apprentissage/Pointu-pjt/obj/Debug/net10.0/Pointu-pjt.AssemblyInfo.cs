@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Pointu-pjt")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5dda0d8f946708f39bb1d5175b78950092790178")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6bde652d620dab6c2b87131c5a6f5c9825f3964e")]
 [assembly: System.Reflection.AssemblyProductAttribute("Pointu-pjt")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Pointu-pjt")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

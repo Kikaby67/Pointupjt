@@ -4,9 +4,22 @@ public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_QUETES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_quetes.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
+        try { return ExecuteInner(); }
+        catch (Exception e)
+        {
+            CPH.LogWarn("QUETE ERREUR: " + e.GetType().Name + " — " + e.Message);
+            CPH.SendMessage("⚠ Erreur !quete : " + e.GetType().Name + " — " + e.Message);
+            return true;
+        }
+    }
+
+    private bool ExecuteInner()
+    {
+        CPH.LogWarn("QUETE: début exec pour " + (args.ContainsKey("user") ? args["user"].ToString() : "???"));
         string nomJoueur = args["user"].ToString();
         string cheminFichier = Path.Combine(DOSSIER_JOUEURS, nomJoueur.ToLower() + ".json");
 
@@ -39,7 +52,7 @@ public class CPHInline
             return true;
         }
 
-        int seed = (nomJoueur.GetHashCode() ^ (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) & int.MaxValue;
+        int seed = ((int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % int.MaxValue) ^ nomJoueur.GetHashCode()) & int.MaxValue;
         Random rng = new Random(seed);
 
         if (LireValeur(json, "enQuete") == "true")
@@ -67,7 +80,8 @@ public class CPHInline
 
             // Le temps est écoulé : résoudre la quête
             string[] data = GetQueteData(queteEnCours);
-            bool succes = rng.Next(100) >= 20;
+            int tauxEchec = int.Parse(LireValeur(File.ReadAllText(CONFIG_GLOBAL), "quete_taux_echec"));
+            bool succes = rng.Next(100) >= tauxEchec;
 
             json = ModifierValeur(json, "enQuete", "false", false);
             json = ModifierValeur(json, "queteTicksRestants", "0", false);
@@ -89,9 +103,18 @@ public class CPHInline
             return true;
         }
 
-        // Lancer une nouvelle quête
-        string[] quetes = { "artefact_01", "artefact_02", "artefact_03", "artefact_04", "artefact_05", "service_01", "service_02", "service_03", "service_04", "service_05", "entretien_01", "entretien_02", "entretien_03" };
-        string queteId = quetes[rng.Next(quetes.Length)];
+        // Lancer une nouvelle quête — liste chargée dynamiquement depuis config_quetes.json
+        string cfgQ    = File.ReadAllText(CONFIG_QUETES);
+        string[] allIds = new string[99];
+        int nbQ = 0;
+        for (int i = 1; i <= 99; i++)
+        {
+            string qid = LireValeurString(cfgQ, QueteKey(i) + "_id");
+            if (qid == "") break;
+            allIds[nbQ++] = qid;
+        }
+        if (nbQ == 0) { CPH.SendMessage(nomJoueur + ", aucune quête disponible !"); return true; }
+        string queteId   = allIds[rng.Next(nbQ)];
         string[] questData = GetQueteData(queteId);
         int ticks = int.Parse(questData[1]);
 
@@ -108,20 +131,39 @@ public class CPHInline
         json = ModifierValeur(json, "queteEventsUsed", "0", false);
 
         File.WriteAllText(cheminFichier, json);
-        CPH.SendMessage(nomJoueur + ", tu pars en quête : " + questData[0] + " !" );
+        int dureeMin = ticks * 5;
+        CPH.SendMessage(nomJoueur + ", " + questData[4] + " t'envoie en mission : " + questData[0] + " (" + dureeMin + " min) !");
         CPH.EnableTimer("QuestCheck");
         return true;
     }
 
+    // [0]=nom [1]=ticks [2]=xp [3]=ram [4]=demandeur [5]=type
     private string[] GetQueteData(string id)
     {
-        string cfg   = File.ReadAllText(CONFIG_QUETES);
-        string ticks = LireValeur(cfg, id + "_ticks");
-        if (ticks == "0") return new string[] { "Quête inconnue", "1", "0", "0" };
-        string desc = LireValeurString(cfg, id + "_description");
-        string xp   = LireValeur(cfg, id + "_xp");
-        string ram  = LireValeur(cfg, id + "_ram");
-        return new string[] { desc, ticks, xp, ram };
+        string cfg = File.ReadAllText(CONFIG_QUETES);
+        for (int i = 1; i <= 99; i++)
+        {
+            string key = QueteKey(i);
+            string qid = LireValeurString(cfg, key + "_id");
+            if (qid == "") break;
+            if (qid != id) continue;
+            return new string[] {
+                LireValeurString(cfg, key + "_nom"),
+                LireValeur(cfg,       key + "_ticks"),
+                LireValeur(cfg,       key + "_xp"),
+                LireValeur(cfg,       key + "_ram"),
+                LireValeurString(cfg, key + "_demandeur"),
+                LireValeurString(cfg, key + "_type")
+            };
+        }
+        return new string[] { "Quête inconnue", "1", "0", "0", "Arbonet", "service" };
+    }
+
+    private string QueteKey(int i)
+    {
+        if (i < 10)  return "quete00" + i;
+        if (i < 100) return "quete0"  + i;
+        return "quete" + i;
     }
 
     private string LireValeur(string json, string cle)

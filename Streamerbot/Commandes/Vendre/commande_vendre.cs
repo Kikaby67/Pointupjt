@@ -86,9 +86,10 @@ public class CPHInline
         if (dansLeSac)
         {
             string nouvInventaire = "";
+            bool   dejaRetire     = false;
             foreach (string item in items)
             {
-                if (item.Trim() == itemTrouve) continue;
+                if (!dejaRetire && item.Trim() == itemTrouve) { dejaRetire = true; continue; }
                 if (nouvInventaire != "") nouvInventaire += ",";
                 nouvInventaire += item.Trim();
             }

@@ -6,6 +6,7 @@ public class CPHInline
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
     private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
@@ -31,7 +32,8 @@ public class CPHInline
         int joueurPVMax  = int.Parse(LireValeur(json, "pvMax"));
         int joueurCA     = int.Parse(LireValeur(json, "classeArmure"));
         int caItemBonus  = GetBonusItems(json, "caBonus");
-        int joueurCADef  = joueurCA + caItemBonus + 3; // CA effective + bonus défense ce tour
+        int bonusDefense = int.Parse(LireValeur(File.ReadAllText(CONFIG_GLOBAL), "combat_defense_bonus_ca"));
+        int joueurCADef  = joueurCA + caItemBonus + bonusDefense;
         int tour         = int.Parse(LireValeur(json, "tourCombat"));
 
         int[] ennemStats = GetEnnemiStats(ennemNom);
@@ -39,7 +41,7 @@ public class CPHInline
 
         Random rng = new Random();
 
-        CPH.SendMessage(nomJoueur + " prend position défensive ! CA temporaire : " + joueurCADef + " (base " + (joueurCA + caItemBonus) + " +3 ce tour).");
+        CPH.SendMessage(nomJoueur + " prend position défensive ! CA temporaire : " + joueurCADef + " (base " + (joueurCA + caItemBonus) + " +" + bonusDefense + " ce tour).");
 
         // === RIPOSTE DE L'ENNEMI (vs CA augmentée) ===
         int    d20Ennemi   = rng.Next(1, 21);
@@ -91,10 +93,14 @@ public class CPHInline
 
     private int[] GetEnnemiStats(string nom)
     {
-        string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfg  = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
         int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
         int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
-        return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
+        return new int[] {
+            ca        != 0 ? ca        : int.Parse(LireValeur(cfgG, "ennemi_ca_defaut")),
+            degatsMax != 0 ? degatsMax : int.Parse(LireValeur(cfgG, "ennemi_degats_defaut"))
+        };
     }
 
     private string AjouterValeur(string json, string cle, int montant)

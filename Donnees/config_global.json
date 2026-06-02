@@ -1,0 +1,32 @@
+{
+  "broadcaster": "kikabygaming",
+
+  "max_sac": 8,
+
+  "repos_cooldown_secondes": 1800,
+
+  "combat_mana_cout_soin": 5,
+  "combat_defense_bonus_ca": 3,
+  "combat_fuite_seuil_normal": 12,
+  "combat_fuite_seuil_cryptolame": 8,
+
+  "quete_taux_echec": 20,
+  "quete_chance_rencontre": 50,
+  "quete_chance_loot_artefact": 60,
+  "quete_chance_ecorce": 5,
+  "quete_cooldown_defaite_secondes": 600,
+  "quete_cooldown_abandon_secondes": 300,
+
+  "timer_xp_gain": 5,
+  "timer_regen_pv": 2,
+  "timer_regen_mana": 3,
+
+  "ennemi_ca_defaut": 12,
+  "ennemi_degats_defaut": 6,
+  "ennemi_xp_defaut": 15,
+  "ennemi_ram_defaut": 3,
+
+  "attaque_degats_defaut": 8,
+  "attaque_des_defaut": 1,
+  "soin_max_defaut": 4
+}

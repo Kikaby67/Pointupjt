@@ -4,6 +4,7 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
@@ -65,13 +66,15 @@ public class CPHInline
         json = EnsureChamp(json, "reposCooldownFin", "0", false);
         json = ModifierValeur(json, "pvActuels",        pvMax.ToString(),                false);
         json = ModifierValeur(json, "manaActuels",      manaMax.ToString(),              false);
-        json = ModifierValeur(json, "reposCooldownFin", (maintenant + 1800).ToString(),  false);
+        int reposCooldown = int.Parse(LireValeur(File.ReadAllText(CONFIG_GLOBAL), "repos_cooldown_secondes"));
+        json = ModifierValeur(json, "reposCooldownFin", (maintenant + reposCooldown).ToString(), false);
 
         File.WriteAllText(cheminFichier, json);
 
         string msgPV   = pvRestores   > 0 ? "+" + pvRestores   + " PV"   : "PV déjà au max";
         string msgMana = manaRestores > 0 ? " · +" + manaRestores + " mana" : "";
-        CPH.SendMessage(nomJoueur + " se repose dans l'Antre de Pointu. La carapace ancienne pulse doucement... " + msgPV + msgMana + " ! (Prochain repos dans 30 min)");
+        int reposMins = reposCooldown / 60;
+        CPH.SendMessage(nomJoueur + " se repose dans l'Antre de Pointu. La carapace ancienne pulse doucement... " + msgPV + msgMana + " ! (Prochain repos dans " + reposMins + " min)");
 
         return true;
     }

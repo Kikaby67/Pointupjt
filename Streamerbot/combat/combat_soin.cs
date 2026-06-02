@@ -7,6 +7,7 @@ public class CPHInline
     private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
     private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
     private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
@@ -39,24 +40,25 @@ public class CPHInline
 
         int[] ennemStats  = GetEnnemiStats(ennemNom);
         int ennemDiceMax  = ennemStats[1];
+        int manaCout      = int.Parse(LireValeur(File.ReadAllText(CONFIG_GLOBAL), "combat_mana_cout_soin"));
 
         Random rng = new Random();
         string msgSoin;
 
         // === SOIN ===
-        if (mana < 5)
+        if (mana < manaCout)
         {
-            msgSoin = nomJoueur + ", pas assez de mana (" + mana + "/5 requis) ! Le soin échoue.";
+            msgSoin = nomJoueur + ", pas assez de mana (" + mana + "/" + manaCout + " requis) ! Le soin échoue.";
         }
         else
         {
             int soinRoll       = RollSoin(classe, sousClasse, rng);
             int nouveauPV      = Math.Min(joueurPV + soinRoll, joueurPVMax);
             int soinsEffectifs = nouveauPV - joueurPV;
-            json = ModifierValeur(json, "pvActuels",   nouveauPV.ToString(),  false);
-            json = ModifierValeur(json, "manaActuels", (mana - 5).ToString(), false);
+            json = ModifierValeur(json, "pvActuels",   nouveauPV.ToString(),          false);
+            json = ModifierValeur(json, "manaActuels", (mana - manaCout).ToString(),  false);
             joueurPV = nouveauPV;
-            msgSoin = nomJoueur + " se soigne +" + soinsEffectifs + " PV → " + joueurPV + "/" + joueurPVMax + " PV (" + (mana - 5) + " mana restant)";
+            msgSoin = nomJoueur + " se soigne +" + soinsEffectifs + " PV → " + joueurPV + "/" + joueurPVMax + " PV (" + (mana - manaCout) + " mana restant)";
         }
 
         // === RIPOSTE DE L'ENNEMI (toujours, même si soin raté) ===
@@ -112,20 +114,25 @@ public class CPHInline
 
     private int RollSoin(string classe, string sousClasse, Random rng)
     {
-        string cfg    = File.ReadAllText(CONFIG_CLASSES);
+        string cfg  = File.ReadAllText(CONFIG_CLASSES);
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
         string key    = (sousClasse != "" && LireValeur(cfg, sousClasse + "_soinMax") != "0") ? sousClasse : classe;
         int soinMax   = int.Parse(LireValeur(cfg, key + "_soinMax"));
         int soinBonus = int.Parse(LireValeur(cfg, key + "_soinBonus"));
-        if (soinMax == 0) soinMax = 4;
+        if (soinMax == 0) soinMax = int.Parse(LireValeur(cfgG, "soin_max_defaut"));
         return rng.Next(1, soinMax + 1) + soinBonus;
     }
 
     private int[] GetEnnemiStats(string nom)
     {
-        string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfg  = File.ReadAllText(CONFIG_ENNEMIS);
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
         int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
         int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
-        return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
+        return new int[] {
+            ca        != 0 ? ca        : int.Parse(LireValeur(cfgG, "ennemi_ca_defaut")),
+            degatsMax != 0 ? degatsMax : int.Parse(LireValeur(cfgG, "ennemi_degats_defaut"))
+        };
     }
 
     private string AjouterValeur(string json, string cle, int montant)

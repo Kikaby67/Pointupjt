@@ -5,10 +5,15 @@ public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_LEVEL    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_level.json";
-    private const int    XP_PAR_PERIODE  = 5;
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
+        string cfgG   = File.ReadAllText(CONFIG_GLOBAL);
+        int xpGain    = int.Parse(LireValeur(cfgG, "timer_xp_gain"));
+        int regenPV   = int.Parse(LireValeur(cfgG, "timer_regen_pv"));
+        int regenMana = int.Parse(LireValeur(cfgG, "timer_regen_mana"));
+
         string[] fichiers = Directory.GetFiles(DOSSIER_JOUEURS, "*.json");
 
         foreach (string cheminFichier in fichiers)
@@ -19,7 +24,7 @@ public class CPHInline
 
             int xpActuel     = int.Parse(LireValeur(json, "experience"));
             int niveauActuel = int.Parse(LireValeur(json, "niveau"));
-            int nouvelXP     = xpActuel + XP_PAR_PERIODE;
+            int nouvelXP     = xpActuel + xpGain;
 
             json = ModifierValeur(json, "experience", nouvelXP.ToString(), false);
 
@@ -38,12 +43,12 @@ public class CPHInline
                 int pvActuels = int.Parse(LireValeur(json, "pvActuels"));
                 int pvMax     = int.Parse(LireValeur(json, "pvMax"));
                 if (pvActuels < pvMax)
-                    json = ModifierValeur(json, "pvActuels", Math.Min(pvActuels + 2, pvMax).ToString(), false);
+                    json = ModifierValeur(json, "pvActuels", Math.Min(pvActuels + regenPV, pvMax).ToString(), false);
 
                 int manaActuels = int.Parse(LireValeur(json, "manaActuels"));
                 int manaMax     = int.Parse(LireValeur(json, "manaMax"));
                 if (manaActuels < manaMax)
-                    json = ModifierValeur(json, "manaActuels", Math.Min(manaActuels + 3, manaMax).ToString(), false);
+                    json = ModifierValeur(json, "manaActuels", Math.Min(manaActuels + regenMana, manaMax).ToString(), false);
             }
 
             File.WriteAllText(cheminFichier, json);

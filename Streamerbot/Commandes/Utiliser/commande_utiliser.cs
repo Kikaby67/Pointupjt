@@ -78,11 +78,12 @@ public class CPHInline
         if (pvRestores > 0)   json = ModifierValeur(json, "pvActuels",   (pvActuels   + pvRestores).ToString(),   false);
         if (manaRestores > 0) json = ModifierValeur(json, "manaActuels", (manaActuels + manaRestores).ToString(), false);
 
-        // Retirer l'item du sac
+        // Retirer l'item du sac (un seul exemplaire)
         string nouvInventaire = "";
+        bool   dejaRetire     = false;
         foreach (string item in items)
         {
-            if (item.Trim() == itemTrouve) continue;
+            if (!dejaRetire && item.Trim() == itemTrouve) { dejaRetire = true; continue; }
             if (nouvInventaire != "") nouvInventaire += ",";
             nouvInventaire += item.Trim();
         }

@@ -1,0 +1,40 @@
+{
+  "vieux_sage_xp_min": 10,
+  "vieux_sage_xp_max": 25,
+  "vieux_sage_chance_xp": 70,
+  "vieux_sage_chance_perte_item": 30,
+  "vieux-sage_chance_combat": 60,
+  "vieux-sage_chance_disparait": 40,
+  "vieux_sage_ram_victoire": 100,
+  "vieux_sage_pv": 100,
+  "vieux_sage_ca": 20,
+  "vieux_sage_degats_max": 16,
+  "vieux_sage_xp_victoire": 30,
+  "vieux_sage_expiration": 120,
+
+  "fragment_xp_min": 5,
+  "fragment_xp_max": 15,
+
+  "source_ram_min": 3,
+  "source_ram_max": 8,
+
+  "chene_ram_min": 5,
+  "chene_ram_max": 10,
+
+  "marchand_pv_min": 5,
+  "marchand_pv_max": 14,
+  "marchand_expiration": 120,
+  "marchand_prix_potion": 5,
+
+  "sbires_ram_min": 5,
+  "sbires_ram_max": 14,
+
+  "glitch_pv_min": 3,
+  "glitch_pv_max": 8,
+
+  "corruption_ram_min": 3,
+  "corruption_ram_max": 7,
+
+  "lichen_pv_min": 3,
+  "lichen_pv_max": 8
+}

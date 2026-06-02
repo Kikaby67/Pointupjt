@@ -8,12 +8,22 @@ public class CPHInline
     private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
     private const string CONFIG_QUETES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_quetes.json";
     private const string CONFIG_LEVEL    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_level.json";
+    private const string CONFIG_ALLIES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_allies.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
         string[] fichiers = Directory.GetFiles(DOSSIER_JOUEURS, "*.json");
-        long maintenant = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        Random rng = new Random();
+        long maintenant   = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        Random rng        = new Random();
+        string cfgAllies  = File.ReadAllText(CONFIG_ALLIES);
+        string cfgG       = File.ReadAllText(CONFIG_GLOBAL);
+        int maxSac               = int.Parse(LireValeur(cfgG, "max_sac"));
+        int chanceRencontre      = int.Parse(LireValeur(cfgG, "quete_chance_rencontre"));
+        int tauxEchec            = int.Parse(LireValeur(cfgG, "quete_taux_echec"));
+        int chanceLootArtefact   = int.Parse(LireValeur(cfgG, "quete_chance_loot_artefact"));
+        int chanceEcorce         = int.Parse(LireValeur(cfgG, "quete_chance_ecorce"));
+        int cooldownDefaite      = int.Parse(LireValeur(cfgG, "quete_cooldown_defaite_secondes"));
 
         foreach (string chemin in fichiers)
         {
@@ -45,7 +55,7 @@ public class CPHInline
                 else
                 {
                     // Défaite : quête annulée, 10 min de cooldown
-                    long cooldownFin = maintenant + 10 * 60;
+                    long cooldownFin = maintenant + cooldownDefaite;
                     json = ModifierValeur(json, "enQuete", "false", false);
                     json = ModifierValeur(json, "enRencontre", "false", false);
                     json = ModifierValeur(json, "rencontreType", "", true);
@@ -58,15 +68,30 @@ public class CPHInline
                 continue;
             }
 
+            // === CHECK OFFRE EXPIRÉE ===
+            string offreEnCours = LireValeurString(json, "offreEnAttente");
+            long   offreExp     = long.Parse(LireValeur(json, "offreExpire"));
+            if (offreEnCours != "" && offreExp > 0 && maintenant > offreExp)
+            {
+                string offreNomMsg = offreEnCours == "vieux_sage" ? "du Vieux Sage" : "du marchand";
+                json = ModifierValeur(json, "offreEnAttente", "", true);
+                json = ModifierValeur(json, "offreValeur",    "0", false);
+                json = ModifierValeur(json, "offreExpire",    "0", false);
+                offreEnCours = "";
+                File.WriteAllText(chemin, json);
+                CPH.SendMessage(nomJoueur + ", l'offre " + offreNomMsg + " a expiré avant que tu ne répondes...");
+                json = File.ReadAllText(chemin);
+            }
+
             // === CAS 2 : check rencontre toutes les 3 minutes ===
             bool encounterLancee = false;
             long dernierCheck = long.Parse(LireValeur(json, "dernierCheckRencontre"));
 
-            if (maintenant - dernierCheck >= 180)
+            if (maintenant - dernierCheck >= 180 && offreEnCours == "")
             {
                 json = ModifierValeur(json, "dernierCheckRencontre", maintenant.ToString(), false);
 
-                if (rng.Next(100) < 40) // 40% de chance de rencontre
+                if (rng.Next(100) < chanceRencontre)
                 {
                     int typeRoll = rng.Next(3); // 0 = combat, 1 = événement, 2 = marchand
 
@@ -125,48 +150,56 @@ public class CPHInline
                         switch (choix)
                         {
                             case 0:
-                                int xp0 = rng.Next(10, 26);
-                                json = AjouterValeur(json, "experience", xp0);
-                                msg = nomJoueur + ", tu croises un Vieux Sage d'Arbonet sur ta route. Il te transmet ses connaissances. +" + xp0 + " XP !";
+                                int xp0 = rng.Next(int.Parse(LireValeur(cfgAllies, "vieux_sage_xp_min")), int.Parse(LireValeur(cfgAllies, "vieux_sage_xp_max")) + 1);
+                                long expSage = long.Parse(LireValeur(cfgAllies, "vieux_sage_expiration"));
+                                json = ModifierValeur(json, "offreEnAttente", "vieux_sage", true);
+                                json = ModifierValeur(json, "offreValeur",    xp0.ToString(), false);
+                                json = ModifierValeur(json, "offreExpire",    (maintenant + expSage).ToString(), false);
+                                string[] scenariosSage = {
+                                    nomJoueur + ", un Vieux Sage t'interpelle et te propose son marché — sagesse contre passage. !accepter ou !refuser (2 min) !",
+                                    nomJoueur + ", un Vieux Sage surgit de la brume et engage la conversation. Il semble avoir quelque chose à t'offrir. !accepter ou !refuser (2 min) !",
+                                    nomJoueur + ", un Vieux Sage apparaît sur ta route, silencieux. Il tend la main vers toi. !accepter ou !refuser (2 min) !"
+                                };
+                                msg = scenariosSage[rng.Next(scenariosSage.Length)];
                                 break;
                             case 1:
-                                int ram1 = rng.Next(3, 9);
+                                int ram1 = rng.Next(int.Parse(LireValeur(cfgAllies, "source_ram_min")), int.Parse(LireValeur(cfgAllies, "source_ram_max")) + 1);
                                 json = AjouterValeur(json, "ram", ram1);
                                 msg = nomJoueur + ", tu découvres une Source de Données intacte au pied d'un chêne-serveur. +" + ram1 + " RAM !";
                                 break;
                             case 2:
-                                int xp2 = rng.Next(5, 16);
+                                int xp2 = rng.Next(int.Parse(LireValeur(cfgAllies, "fragment_xp_min")), int.Parse(LireValeur(cfgAllies, "fragment_xp_max")) + 1);
                                 json = AjouterValeur(json, "experience", xp2);
                                 msg = nomJoueur + ", tu trouves un Fragment de Carapace de Pointu. Le savoir qu'il contient t'illumine. +" + xp2 + " XP !";
                                 break;
                             case 3:
-                                int ram3 = rng.Next(5, 11);
+                                int ram3 = rng.Next(int.Parse(LireValeur(cfgAllies, "chene_ram_min")), int.Parse(LireValeur(cfgAllies, "chene_ram_max")) + 1);
                                 json = AjouterValeur(json, "ram", ram3);
                                 msg = nomJoueur + ", un chêne-serveur bienveillant t'offre sa résine. +" + ram3 + " RAM !";
                                 break;
                             case 4:
                                 int ramAct4 = int.Parse(LireValeur(json, "ram"));
-                                int malus4 = Math.Min(rng.Next(5, 15), ramAct4);
+                                int malus4 = Math.Min(rng.Next(int.Parse(LireValeur(cfgAllies, "sbires_ram_min")), int.Parse(LireValeur(cfgAllies, "sbires_ram_max")) + 1), ramAct4);
                                 json = AjouterValeur(json, "ram", -malus4);
                                 msg = nomJoueur + ", les sbires du Castor t'ont tendu une embuscade ! Tu perds " + malus4 + " RAM...";
                                 break;
                             case 5:
                                 int pvAct5 = int.Parse(LireValeur(json, "pvActuels"));
-                                int malus5 = rng.Next(3, 9);
+                                int malus5 = rng.Next(int.Parse(LireValeur(cfgAllies, "glitch_pv_min")), int.Parse(LireValeur(cfgAllies, "glitch_pv_max")) + 1);
                                 int nvPV5 = Math.Max(1, pvAct5 - malus5);
                                 json = ModifierValeur(json, "pvActuels", nvPV5.ToString(), false);
                                 msg = nomJoueur + ", un glitch du réseau te traverse violemment ! -" + (pvAct5 - nvPV5) + " PV...";
                                 break;
                             case 6:
                                 int ramAct6 = int.Parse(LireValeur(json, "ram"));
-                                int malus6 = Math.Min(rng.Next(3, 8), ramAct6);
+                                int malus6 = Math.Min(rng.Next(int.Parse(LireValeur(cfgAllies, "corruption_ram_min")), int.Parse(LireValeur(cfgAllies, "corruption_ram_max")) + 1), ramAct6);
                                 json = AjouterValeur(json, "ram", -malus6);
                                 msg = nomJoueur + ", une corruption de données ronge tes ressources. -" + malus6 + " RAM...";
                                 break;
                             default:
                                 int pvAct7 = int.Parse(LireValeur(json, "pvActuels"));
                                 int pvMax7 = int.Parse(LireValeur(json, "pvMax"));
-                                int soin7 = Math.Min(rng.Next(3, 9), pvMax7 - pvAct7);
+                                int soin7 = Math.Min(rng.Next(int.Parse(LireValeur(cfgAllies, "lichen_pv_min")), int.Parse(LireValeur(cfgAllies, "lichen_pv_max")) + 1), pvMax7 - pvAct7);
                                 if (soin7 > 0)
                                 {
                                     json = AjouterValeur(json, "pvActuels", soin7);
@@ -185,15 +218,21 @@ public class CPHInline
                     }
                     else
                     {
-                        // Marchand : soin plafonné à pvMax, pas de pause
-                        int pvActuels = int.Parse(LireValeur(json, "pvActuels"));
-                        int pvMax = int.Parse(LireValeur(json, "pvMax"));
-                        int soin = Math.Min(rng.Next(5, 15), pvMax - pvActuels);
+                        // Marchand : soin interactif, vente de potion automatique
+                        int pvActuelsMarchand = int.Parse(LireValeur(json, "pvActuels"));
+                        int pvMaxMarchand     = int.Parse(LireValeur(json, "pvMax"));
+                        int soinMin  = int.Parse(LireValeur(cfgAllies, "marchand_pv_min"));
+                        int soinMaxV = int.Parse(LireValeur(cfgAllies, "marchand_pv_max"));
+                        int soin = Math.Min(rng.Next(soinMin, soinMaxV + 1), pvMaxMarchand - pvActuelsMarchand);
+                        long expMarchand = long.Parse(LireValeur(cfgAllies, "marchand_expiration"));
                         string msgMarchand;
+
                         if (soin > 0)
                         {
-                            json = AjouterValeur(json, "pvActuels", soin);
-                            msgMarchand = nomJoueur + ", tu croises un marchand ambulant qui soigne tes blessures. +" + soin + " PV !";
+                            json = ModifierValeur(json, "offreEnAttente", "marchand_soin", true);
+                            json = ModifierValeur(json, "offreValeur",    soin.ToString(), false);
+                            json = ModifierValeur(json, "offreExpire",    (maintenant + expMarchand).ToString(), false);
+                            msgMarchand = nomJoueur + ", un marchand ambulant t'aborde ! Il propose de te soigner (" + soin + " PV). Tape !accepter ou !refuser (2 min) !";
                         }
                         else
                         {
@@ -202,13 +241,14 @@ public class CPHInline
 
                         string invMarchand = LireValeurString(json, "inventaire");
                         int nbItemsMarchand = invMarchand == "" ? 0 : invMarchand.Split(',').Length;
-                        int ramMarchand = int.Parse(LireValeur(json, "ram"));
-                        if (nbItemsMarchand < 8 && ramMarchand >= 30)
+                        int ramMarchand  = int.Parse(LireValeur(json, "ram"));
+                        int prixPotion   = int.Parse(LireValeur(cfgAllies, "marchand_prix_potion"));
+                        if (nbItemsMarchand < maxSac && ramMarchand >= prixPotion)
                         {
-                            json = AjouterValeur(json, "ram", -30);
-                            string nouvInvMarchand = invMarchand == "" ? "Potion-Recharge" : invMarchand + ",Potion-Recharge";
+                            json = AjouterValeur(json, "ram", -prixPotion);
+                            string nouvInvMarchand = invMarchand == "" ? "Potion" : invMarchand + ",Potion";
                             json = ModifierValeurString(json, "inventaire", nouvInvMarchand);
-                            msgMarchand += " Il te vend une Potion-Recharge pour 30 RAM !";
+                            msgMarchand += " Il te vend aussi une Potion pour " + prixPotion + " RAM !";
                         }
 
                         File.WriteAllText(chemin, json);
@@ -238,7 +278,7 @@ public class CPHInline
 
             // Résoudre la quête
             string[] data = GetQueteData(queteId);
-            bool succes = rng.Next(100) >= 20;
+            bool succes = rng.Next(100) >= tauxEchec;
 
             json = ModifierValeur(json, "enQuete", "false", false);
             json = ModifierValeur(json, "queteTicksRestants", "0", false);
@@ -253,17 +293,51 @@ public class CPHInline
                 json = VerifierMonteeNiveau(json, nomJoueur);
 
                 string lootMsg = "";
-                if (queteId.StartsWith("artefact_") && rng.Next(100) < 70)
+                if (data[5] == "artefact" && rng.Next(100) < chanceLootArtefact)
                 {
                     string inventaire = LireValeurString(json, "inventaire");
                     int nbItems = inventaire == "" ? 0 : inventaire.Split(',').Length;
-                    if (nbItems < 8)
+                    if (nbItems < maxSac)
                     {
-                        string[] lootPool = { "Ligne-Reseau", "Morceau-Arbre-Serveur", "Potion-Recharge", "Bague-de-protection", "Armure-de-feuille", "Gants-de-force" };
-                        string loot = lootPool[rng.Next(lootPool.Length)];
+                        string   lootRaw  = LireValeurString(File.ReadAllText(CONFIG_QUETES), "loot_commun");
+                        string[] lootPool = lootRaw != "" ? lootRaw.Split(',') : new string[] { "Potion" };
+                        string   loot     = lootPool[rng.Next(lootPool.Length)].Trim();
                         string nouvInventaire = inventaire == "" ? loot : inventaire + "," + loot;
                         json = ModifierValeurString(json, "inventaire", nouvInventaire);
                         lootMsg = " Tu as trouvé : " + loot + " !";
+                    }
+                }
+
+                // Loot secret : morceau d'écorce gravé (20% — seulement les lettres manquantes)
+                if (rng.Next(100) < chanceEcorce)
+                {
+                    string invEcorce = LireValeurString(json, "inventaire");
+                    int nbEcorce = invEcorce == "" ? 0 : invEcorce.Split(',').Length;
+                    if (nbEcorce < maxSac)
+                    {
+                        string[] pieces = { "Ecorce-R", "Ecorce-A", "Ecorce-C", "Ecorce-I", "Ecorce-N", "Ecorce-E" };
+                        string invAvecVirgules = "," + invEcorce + ",";
+                        int nbManquantes = 0;
+                        for (int k = 0; k < pieces.Length; k++)
+                            if (!invAvecVirgules.Contains("," + pieces[k] + ",")) nbManquantes++;
+
+                        if (nbManquantes > 0)
+                        {
+                            int pickPiece = rng.Next(nbManquantes);
+                            int cntPiece  = 0;
+                            string ecorceLoot = "";
+                            for (int k = 0; k < pieces.Length; k++)
+                            {
+                                if (!invAvecVirgules.Contains("," + pieces[k] + ","))
+                                {
+                                    if (cntPiece == pickPiece) { ecorceLoot = pieces[k]; break; }
+                                    cntPiece++;
+                                }
+                            }
+                            string nouvInvEcorce = invEcorce == "" ? ecorceLoot : invEcorce + "," + ecorceLoot;
+                            json = ModifierValeurString(json, "inventaire", nouvInvEcorce);
+                            lootMsg += " Un morceau d'écorce gravé tombe de ta besace... (" + ecorceLoot + ")";
+                        }
                     }
                 }
 
@@ -336,14 +410,33 @@ public class CPHInline
         return "🎉 " + nomJoueur + " passe au niveau " + niveau + " ! " + bonus;
     }
 
+    // [0]=nom [1]=ticks [2]=xp [3]=ram [4]=demandeur [5]=type
     private string[] GetQueteData(string id)
     {
-        string cfg   = File.ReadAllText(CONFIG_QUETES);
-        string ticks = LireValeur(cfg, id + "_ticks");
-        if (ticks == "0") return new string[] { "", "1", "0", "0" };
-        string xp  = LireValeur(cfg, id + "_xp");
-        string ram = LireValeur(cfg, id + "_ram");
-        return new string[] { "", ticks, xp, ram };
+        string cfg = File.ReadAllText(CONFIG_QUETES);
+        for (int i = 1; i <= 99; i++)
+        {
+            string key = QueteKey(i);
+            string qid = LireValeurString(cfg, key + "_id");
+            if (qid == "") break;
+            if (qid != id) continue;
+            return new string[] {
+                LireValeurString(cfg, key + "_nom"),
+                LireValeur(cfg,       key + "_ticks"),
+                LireValeur(cfg,       key + "_xp"),
+                LireValeur(cfg,       key + "_ram"),
+                LireValeurString(cfg, key + "_demandeur"),
+                LireValeurString(cfg, key + "_type")
+            };
+        }
+        return new string[] { "", "1", "0", "0", "Arbonet", "service" };
+    }
+
+    private string QueteKey(int i)
+    {
+        if (i < 10)  return "quete00" + i;
+        if (i < 100) return "quete0"  + i;
+        return "quete" + i;
     }
 
     private string LireValeur(string json, string cle)

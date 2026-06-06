@@ -1,0 +1,14 @@
+# ─── Secrets — ne JAMAIS committer ───
+.env
+**/.env
+
+# ─── Zips de déploiement (contiennent le .env !) ───
+*.zip
+
+# ─── Python ───
+__pycache__/
+*.pyc
+
+# ─── Logs ───
+error.log
+**/error.log

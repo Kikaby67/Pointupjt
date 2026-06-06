@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Guide Arbonet — Pointu</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d1a0d;
+    color: #d4e8d4;
+    font-family: 'Lato', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 40px;
+  }
+
+  /* ── COUVERTURE ───────────────────────────────────────── */
+  .cover {
+    text-align: center;
+    padding: 60px 0 80px;
+    border-bottom: 2px solid #00ff50;
+    margin-bottom: 60px;
+  }
+  .cover img.pointu {
+    width: 260px;
+    border-radius: 50%;
+    border: 4px solid #00ff50;
+    box-shadow: 0 0 40px rgba(0,255,80,0.5), 0 0 80px rgba(0,255,80,0.2);
+    margin-bottom: 32px;
+  }
+  .cover h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 48px;
+    font-weight: 900;
+    color: #00ff50;
+    text-shadow: 0 0 20px rgba(0,255,80,0.8);
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+  }
+  .cover .subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: #7ec87e;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .cover .intro-lore {
+    font-size: 14px;
+    color: #a0c4a0;
+    font-style: italic;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  /* ── SECTIONS ─────────────────────────────────────────── */
+  .section {
+    margin-bottom: 56px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-left: 4px solid #00ff50;
+    padding-left: 20px;
+    margin-bottom: 28px;
+  }
+  .section-icon { font-size: 28px; }
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    color: #00ff50;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+
+  /* ── COMMANDES ────────────────────────────────────────── */
+  .cmd-block {
+    background: #111f11;
+    border: 1px solid #1e3a1e;
+    border-left: 3px solid #00ff50;
+    border-radius: 4px;
+    padding: 18px 24px;
+    margin-bottom: 16px;
+  }
+  .cmd-block:hover { border-left-color: #7fff7f; }
+
+  .cmd-name {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    color: #00ff50;
+    margin-bottom: 6px;
+  }
+  .cmd-desc {
+    color: #c8dcc8;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .cmd-when {
+    font-size: 12px;
+    color: #7ea07e;
+    font-style: italic;
+  }
+  .cmd-tip {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #a0d4a0;
+    background: #0d2d0d;
+    border-radius: 3px;
+    padding: 6px 10px;
+  }
+  .cmd-tip::before { content: "💡 "; }
+
+  /* ── TABLEAUX ─────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+  th {
+    background: #0d2d0d;
+    color: #00ff50;
+    font-family: 'Cinzel', serif;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid #00ff50;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #1a3a1a;
+    color: #c8dcc8;
+  }
+  tr:nth-child(even) td { background: #0d1f0d; }
+  .mono { font-family: 'Courier New', monospace; color: #7fff7f; }
+  .tag-comm { color: #a0d4a0; font-size: 11px; }
+  .tag-leg  { color: #ffd700; font-size: 11px; font-weight: bold; }
+
+  /* ── BLOCS SPÉCIAUX ───────────────────────────────────── */
+  .warn-box {
+    background: #1a1a0a;
+    border: 1px solid #665500;
+    border-left: 3px solid #ffaa00;
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+    color: #d4c88a;
+  }
+  .warn-box::before { content: "⚠️  "; }
+
+  .lore-box {
+    background: #050d10;
+    border: 1px solid #005580;
+    border-left: 3px solid #00aaff;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    font-style: italic;
+    color: #a0c8d4;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+
+  /* ── CLASSES ──────────────────────────────────────────── */
+  .class-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .class-card {
+    background: #111f11;
+    border: 1px solid #1e3a1e;
+    border-radius: 6px;
+    padding: 16px 20px;
+  }
+  .class-name {
+    font-family: 'Cinzel', serif;
+    color: #00ff50;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .class-stats { font-size: 12px; color: #a0c4a0; }
+  .class-role  { font-size: 11px; color: #7ea07e; font-style: italic; margin-top: 4px; }
+
+  /* ── ITEMS ────────────────────────────────────────────── */
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .item-card {
+    background: #0d1a0d;
+    border: 1px solid #1e3a1e;
+    border-radius: 4px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .item-card img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 8px; }
+  .item-card .item-name { font-size: 12px; color: #00ff50; font-weight: bold; }
+  .item-card .item-bonus { font-size: 11px; color: #a0c4a0; margin-top: 2px; }
+
+  /* ── VIEUX SAGE ───────────────────────────────────────── */
+  .sage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .sage-accept {
+    background: #0d1f0d;
+    border: 1px solid #1e5a1e;
+    border-top: 3px solid #00ff50;
+    border-radius: 4px;
+    padding: 16px 18px;
+  }
+  .sage-refuse {
+    background: #1a0d0d;
+    border: 1px solid #5a1e1e;
+    border-top: 3px solid #ff4444;
+    border-radius: 4px;
+    padding: 16px 18px;
+  }
+  .sage-title { font-weight: bold; font-size: 13px; margin-bottom: 10px; }
+  .sage-accept .sage-title { color: #00ff50; }
+  .sage-refuse .sage-title { color: #ff6666; }
+  .sage-row { font-size: 12px; color: #c0d4c0; margin-bottom: 6px; }
+
+  /* ── SÉPARATEUR ───────────────────────────────────────── */
+  .sep {
+    border: none;
+    border-top: 1px solid #1a3a1a;
+    margin: 50px 0;
+  }
+
+  /* ── FOOTER ───────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding-top: 40px;
+    border-top: 2px solid #00ff50;
+    color: #4a7a4a;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+  .footer strong { color: #00ff50; }
+</style>
+</head>
+<body>
+
+<!-- ══ COUVERTURE ══════════════════════════════════════════ -->
+<div class="cover">
+  <img class="pointu" src="Images/Pointu_PP/POINTU_PPV2.png" alt="Pointu">
+  <h1>ARBONET</h1>
+  <p class="subtitle">Guide du Voyageur</p>
+  <p class="intro-lore">
+    Un monde où la nature et la technologie coexistent en équilibre fragile.<br>
+    Des chênes-serveurs dont les racines pulsent de données. Des créatures mi-chair, mi-code.<br>
+    Et toi — un aventurier qui vient de poser le pied dans l'Antre de Pointu.<br><br>
+    <strong style="color:#00ff50;">Bienvenue.</strong>
+  </p>
+</div>
+
+
+<!-- ══ SECTION 1 : PREMIERS PAS ═══════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🌱</span>
+    <h2 class="section-title">Premiers pas</h2>
+  </div>
+
+  <div class="lore-box">
+    Avant de pouvoir arpenter Arbonet, il te faut créer ton profil d'aventurier.
+    Pointu lui-même t'accueille dans l'Antre — une caverne ancienne gravée de circuits lumineux.
+    C'est ici que tout commence.
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!rejoindre</div>
+    <div class="cmd-desc">Crée ton profil d'aventurier dans Arbonet. À faire une seule fois.</div>
+    <div class="cmd-when">Ton tout premier message dans le jeu.</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!choisirclasse [nom]</div>
+    <div class="cmd-desc">Choisit ta classe parmi les 5 disponibles. Définit tes stats, ton arme et ton style de jeu.</div>
+    <div class="cmd-when">Juste après !rejoindre.</div>
+    <div class="cmd-tip">Tape le nom de la classe pour voir sa description : !hexadecimeur, !cryptolame, !hackmancien, !firewaller, !algorythmancien</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!profil</div>
+    <div class="cmd-desc">Affiche tes stats complètes : niveau, PV, XP, RAM, classe, équipement...</div>
+    <div class="cmd-when">À tout moment pour vérifier ton état.</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!sousclasse [nom]</div>
+    <div class="cmd-desc">Débloque une spécialisation qui améliore tes capacités. Irréversible.</div>
+    <div class="cmd-when">Uniquement disponible à partir du niveau 5.</div>
+  </div>
+</div>
+
+<!-- ══ SECTION 2 : CLASSES ════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">⚔️</span>
+    <h2 class="section-title">Les 5 Classes</h2>
+  </div>
+
+  <div class="class-grid">
+    <div class="class-card">
+      <div class="class-name">Hexadécimeur</div>
+      <div class="class-stats">25 PV · CA 14 · Épée · 1d8 dégâts</div>
+      <div class="class-role">Le guerrier équilibré. Solide et fiable.</div>
+    </div>
+    <div class="class-card">
+      <div class="class-name">Cryptolame</div>
+      <div class="class-stats">16 PV · CA 13 · Double-Dagues · 2 attaques</div>
+      <div class="class-role">L'assassin rapide. Frappe deux fois, fuit facilement.</div>
+    </div>
+    <div class="class-card">
+      <div class="class-name">Hackmancien</div>
+      <div class="class-stats">14 PV · CA 10 · Bâton-Magique · 1d12 dégâts</div>
+      <div class="class-role">Le mage dévastateur. Fragile mais puissant.</div>
+    </div>
+    <div class="class-card">
+      <div class="class-name">Firewaller</div>
+      <div class="class-stats">22 PV · CA 15 · Marteau-Rune · Soin bonus</div>
+      <div class="class-role">Le tank protecteur. Encaisse et tient bon.</div>
+    </div>
+    <div class="class-card" style="grid-column: span 2;">
+      <div class="class-name">Algorythmancien</div>
+      <div class="class-stats">16 PV · CA 11 · Luth-Code · Haut Charisme</div>
+      <div class="class-role">Le barde de soutien. Inspire ses alliés, surprend ses ennemis.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION 3 : QUÊTES ═════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🗺️</span>
+    <h2 class="section-title">Quêtes</h2>
+  </div>
+
+  <div class="lore-box">
+    Arbonet est vaste. Pointu et ses alliés ont besoin de toi pour explorer ses recoins,
+    récupérer des artefacts, escorter des marchands ou entretenir les chênes-serveurs.
+    Chaque mission rapporte de l'XP, des RAM... et parfois un objet rare.
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!quete</div>
+    <div class="cmd-desc">Lance une nouvelle quête ou consulte l'avancement de ta quête en cours.</div>
+    <div class="cmd-when">Quand tu es disponible — pas en combat.</div>
+    <div class="cmd-tip">Les quêtes durent entre 5 et 30 min. La résolution est automatique !</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!abandon</div>
+    <div class="cmd-desc">Abandonne ta quête en cours. Tu seras pénalisé d'un cooldown de 5 minutes.</div>
+    <div class="cmd-when">Si tu veux changer de quête. Utilise-le avec parcimonie.</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!accepter &nbsp;/&nbsp; !refuser</div>
+    <div class="cmd-desc">Répond aux propositions que tu croises pendant une quête. Tu as 2 minutes pour décider.</div>
+    <div class="cmd-when">Quand un message t'invite à choisir en cours de route.</div>
+  </div>
+
+  <div class="warn-box">
+    Pendant une quête, tu peux tomber sur des ennemis, des marchands ou le mystérieux Vieux Sage d'Arbonet.
+    Tes choix ont des conséquences !
+  </div>
+
+ 
+
+<!-- ══ SECTION 4 : COMBAT ═════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🗡️</span>
+    <h2 class="section-title">Combat</h2>
+  </div>
+
+  <div class="lore-box">
+    Arbonet est peuplé de créatures corrompues par Hector-Pierre Castor.
+    Martre-Trojan, Sanglier-Crash, Taupe-Malware... ils rôdent sur tes routes.
+    Quand l'un d'eux surgit, tu as quatre options.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Commande</th>
+        <th>Action</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">!attaque</td>
+        <td>Frappe l'ennemi. L'ennemi riposte toujours.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="mono">!soin</td>
+        <td>Récupère des PV grâce à tes capacités de classe.</td>
+        <td>Coûte 5 Mana. L'ennemi riposte quand même.</td>
+      </tr>
+      <tr>
+        <td class="mono">!defense</td>
+        <td>Posture défensive — tu encaisses mieux ce tour-ci.</td>
+        <td>+3 à ta Classe d'Armure ce tour.</td>
+      </tr>
+      <tr>
+        <td class="mono">!fuir</td>
+        <td>Tente de fuir le combat.</td>
+        <td>Risqué si l'ennemi te rattrape. La Cryptolame fuit plus facilement.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="warn-box">
+    Si tu tombes à 0 PV, la quête s'arrête et tu es en cooldown pendant 10 minutes.
+  </div>
+</div>
+
+<!-- ══ SECTION 5 : REPOS & RÉCUPÉRATION ══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🐢</span>
+    <h2 class="section-title">Repos &amp; Récupération</h2>
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!repos</div>
+    <div class="cmd-desc">
+      Restaure tous tes PV et tout ton Mana d'un coup.
+      Tu te retrouves dans l'Antre de Pointu, à l'abri, pour te régénérer.
+    </div>
+    <div class="cmd-when">Hors combat et hors quête. Cooldown de 30 minutes.</div>
+    <div class="cmd-tip">Même hors !repos, tes PV et Mana se régénèrent lentement toutes les 15 minutes de stream.</div>
+  </div>
+</div>
+
+<!-- ══ SECTION 6 : INVENTAIRE & ITEMS ═══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🎒</span>
+    <h2 class="section-title">Inventaire &amp; Objets</h2>
+  </div>
+
+  <div class="lore-box">
+    Ton sac peut contenir jusqu'à 8 objets. Armes, armures, potions, fragments mystérieux...
+    Les objets se trouvent en quête, s'achètent aux marchands ou se gagnent en combat.
+  </div>
+
+  <div class="cmd-block">
+    <div class="cmd-name">!inventaire</div>
+    <div class="cmd-desc">Affiche le contenu de ton sac et ce que tu portes sur toi.</div>
+  </div>
+  <div class="cmd-block">
+    <div class="cmd-name">!equiper [nom de l'objet]</div>
+    <div class="cmd-desc">Équipe une arme, armure ou accessoire depuis ton sac.</div>
+    <div class="cmd-tip">Équiper un objet quand un slot est déjà occupé renvoie l'ancien dans le sac.</div>
+  </div>
+  <div class="cmd-block">
+    <div class="cmd-name">!equipement</div>
+    <div class="cmd-desc">Affiche les bonus totaux de ce que tu portes actuellement.</div>
+  </div>
+  <div class="cmd-block">
+    <div class="cmd-name">!utiliser [nom de l'objet]</div>
+    <div class="cmd-desc">Utilise un consommable (potion, etc.) depuis ton sac. Fonctionne en combat.</div>
+  </div>
+  <div class="cmd-block">
+    <div class="cmd-name">!vendre [nom de l'objet]</div>
+    <div class="cmd-desc">Vend un objet du sac ou un équipement contre des RAM.</div>
+    <div class="cmd-when">Hors combat uniquement.</div>
+  </div>
+
+  <h3 style="color:#7ec87e; font-size:13px; margin:24px 0 12px; letter-spacing:1px; text-transform:uppercase;">
+    ✦ Quelques objets de l'Antre
+  </h3>
+
+  <div class="item-grid">
+    <div class="item-card">
+      <img src="Images/Ítems/Lame_de_Pointu.png" alt="Lame de Pointu">
+      <div class="item-name">Lame-de-Pointu</div>
+      <div class="item-bonus">+2 Attaque</div>
+    </div>
+    <div class="item-card">
+      <img src="Images/Ítems/Croc_de_loup.png" alt="Croc de Loup">
+      <div class="item-name">Croc-de-Loup</div>
+      <div class="item-bonus">+2 Attaque</div>
+    </div>
+    <div class="item-card">
+      <img src="Images/Ítems/Septre_de_l_Antre.png" alt="Sceptre">
+      <div class="item-name">Sceptre-de-L'Antre</div>
+      <div class="item-bonus">+2 Attaque · +5 Mana</div>
+    </div>
+    <div class="item-card">
+      <img src="Images/Ítems/Marteau_Carapace.png" alt="Marteau Carapace">
+      <div class="item-name">Marteau-Carapace</div>
+      <div class="item-bonus">+1 Attaque · +1 Charisme</div>
+    </div>
+    <div class="item-card">
+      <img src="Images/Ítems/Arc-Fleau.png" alt="Arc-Fléau">
+      <div class="item-name">Arc-Fléau</div>
+      <div class="item-bonus">+3 Attaque</div>
+    </div>
+    <div class="item-card">
+      <img src="Images/Ítems/Luth-01.png" alt="Luth-01">
+      <div class="item-name">Luth-01</div>
+      <div class="item-bonus">+1 Charisme</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION 7 : RAM & PROGRESSION ═════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">💾</span>
+    <h2 class="section-title">RAM &amp; Progression</h2>
+  </div>
+
+  <p style="color:#c8dcc8; font-size:14px; margin-bottom:20px;">
+    La <strong style="color:#00ff50;">RAM</strong> est la monnaie d'Arbonet — la mémoire vive du monde.
+    Tu en gagnes en quête, en combat, et en vendant des objets.
+    L'<strong style="color:#00ff50;">XP</strong> te fait progresser en niveau, avec des bonus à chaque palier.
+  </p>
+
+<!-- ══ SECTION 8 : LORE & MYSTÈRES ═══════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🌳</span>
+    <h2 class="section-title">Lore &amp; Mystères</h2>
+  </div>
+
+  <div class="lore-box">
+    <strong style="color:#00aaff;">Arbonet</strong> est un monde hybride. Les chênes-serveurs font circuler la mémoire collective
+    à travers leurs racines lumineuses. Mais cette mémoire disparaît — volée, corrompue, effacée.<br><br>
+    <strong style="color:#ff6666;">Hector-Pierre Castor</strong> en est le responsable. Convaincu que la technologie a détruit
+    ce qui faisait la valeur de son monde, il s'acharne à tout effacer.<br><br>
+    <strong style="color:#00ff50;">Pointu</strong>, la tortue ancienne aux yeux bleus électriques, garde l'Antre depuis des siècles.
+    Sa carapace est couverte de cicatrices. Dans chaque fissure, une histoire. Un secret.<br><br>
+    <em>Tape <strong>!arbonet</strong> dans le chat pour en entendre davantage...</em>
+  </div>
+
+  <div class="warn-box" style="border-left-color:#7fff7f; color:#a0d4a0;">
+    Arbonet recèle des secrets que nul guide ne peut te révéler.
+    Explore. Lis les descriptions de tes objets. Écoute les PNJ lors de tes quêtes.
+    Le monde a de la mémoire — à toi de la retrouver.
+  </div>
+</div>
+
+<!-- ══ FOOTER ══════════════════════════════════════════════ -->
+<hr class="sep">
+<div class="footer">
+  <p>Guide Arbonet · kikabygaming · <strong>Pointu-PJT</strong> · 2026</p>
+  <p style="margin-top:8px;">🐢 &nbsp; Que les racines d'Arbonet te guident. &nbsp; 🌳</p>
+</div>
+
+</body>
+</html>

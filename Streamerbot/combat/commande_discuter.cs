@@ -1,0 +1,155 @@
+using System;
+using System.IO;
+
+public class CPHInline
+{
+    private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
+    private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
+
+    public bool Execute()
+    {
+        string nomJoueur     = args["user"].ToString();
+        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, nomJoueur.ToLower() + ".json");
+
+        if (!File.Exists(cheminFichier))
+        {
+            CPH.SendMessage(nomJoueur + ", tu n'es pas encore inscrit ! Tape !rejoindre.");
+            return true;
+        }
+
+        string json = File.ReadAllText(cheminFichier);
+        json = EnsureChamp(json, "compagnonActif", "", true);
+
+        if (LireValeur(json, "enCombat") != "true" || LireValeur(json, "enRencontre") != "true")
+        {
+            CPH.SendMessage(nomJoueur + ", il n'y a personne avec qui discuter pour l'instant.");
+            return true;
+        }
+
+        string ennemNom  = LireValeur(json, "ennemiNom");
+        string cfgG      = File.ReadAllText(CONFIG_GLOBAL);
+        long maintenant  = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        Random rng       = new Random();
+
+        int charismeEff = int.Parse(LireValeur(json, "charisme")) + GetBonusItems(json, "charismeBonus");
+        int discuter = int.Parse(LireValeur(cfgG, "discuter_base_pct"))
+                     + charismeEff * int.Parse(LireValeur(cfgG, "discuter_charisme_pct"));
+        discuter = Clamp(discuter, int.Parse(LireValeur(cfgG, "discuter_min")), int.Parse(LireValeur(cfgG, "discuter_max")));
+
+        bool reussite    = rng.Next(100) < discuter;
+        string compagnon = LireValeurString(json, "compagnonActif");
+
+        if (compagnon == "")
+        {
+            if (reussite)
+            {
+                // Recrutement : l'ennemi devient compagnon (jusqu'à fin de quête / défaite)
+                json = ModifierValeur(json, "compagnonActif", ennemNom, true);
+                json = ReprendreQuete(json, maintenant);
+                File.WriteAllText(cheminFichier, json);
+                CPH.SendMessage(nomJoueur + " tente de parlementer avec " + ennemNom + " → RÉUSSITE ! "
+                    + ennemNom + " rejoint ta cause et combattra à tes côtés ! Ta quête reprend.");
+            }
+            else
+            {
+                File.WriteAllText(cheminFichier, json); // rencontre maintenue
+                CPH.SendMessage(nomJoueur + " tente de parlementer avec " + ennemNom + " → ÉCHEC ! "
+                    + ennemNom + " ne veut rien entendre. Tape !combat ou !fuir.");
+            }
+        }
+        else
+        {
+            if (reussite)
+            {
+                // Déjà un compagnon → simple passage pacifique
+                json = ReprendreQuete(json, maintenant);
+                File.WriteAllText(cheminFichier, json);
+                CPH.SendMessage(nomJoueur + " et son compagnon " + compagnon + " désamorcent la rencontre avec " + ennemNom
+                    + " → RÉUSSITE ! Vous passez sans combattre. Ta quête reprend.");
+            }
+            else
+            {
+                File.WriteAllText(cheminFichier, json); // rencontre maintenue
+                CPH.SendMessage(nomJoueur + " tente de parlementer → ÉCHEC ! " + ennemNom
+                    + " refuse. Tape !combat (ton compagnon " + compagnon + " t'aidera) ou !fuir.");
+            }
+        }
+        return true;
+    }
+
+    private string ReprendreQuete(string json, long maintenant)
+    {
+        long pauseDebut = long.Parse(LireValeur(json, "quetePauseDebut"));
+        long totalPause = long.Parse(LireValeur(json, "queteTotalPause"));
+        if (pauseDebut > 0) totalPause += maintenant - pauseDebut;
+
+        json = ModifierValeur(json, "enCombat", "false", false);
+        json = ModifierValeur(json, "enRencontre", "false", false);
+        json = ModifierValeur(json, "rencontreType", "", true);
+        json = ModifierValeur(json, "rencontreExpire", "0", false);
+        json = ModifierValeur(json, "quetePauseDebut", "0", false);
+        json = ModifierValeur(json, "queteTotalPause", totalPause.ToString(), false);
+        return json;
+    }
+
+    private int GetBonusItems(string json, string stat)
+    {
+        string   cfgItems = File.ReadAllText(CONFIG_ITEMS);
+        string[] slots    = { "armeEquipee", "armureEquipee", "accessoireEquipe" };
+        int total = 0;
+        foreach (string slot in slots)
+        {
+            string item = LireValeur(json, slot);
+            if (item != "" && item != "0")
+                total += int.Parse(LireValeur(cfgItems, item + "_" + stat));
+        }
+        return total;
+    }
+
+    private int Clamp(int v, int min, int max)
+    {
+        return v < min ? min : (v > max ? max : v);
+    }
+
+    private string EnsureChamp(string json, string cle, string valeurDefaut, bool estTexte)
+    {
+        if (json.Contains("\"" + cle + "\"")) return json;
+        int    pos = json.LastIndexOf('}');
+        string val = estTexte ? "\"" + valeurDefaut + "\"" : valeurDefaut;
+        return json.Substring(0, pos) + ",\n  \"" + cle + "\": " + val + "\n}";
+    }
+
+    private string LireValeur(string json, string cle)
+    {
+        string marqueur = "\"" + cle + "\": ";
+        int posDebut = json.IndexOf(marqueur);
+        if (posDebut == -1) return "0";
+        posDebut += marqueur.Length;
+        int posFin = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
+        return json.Substring(posDebut, posFin - posDebut).Trim().Trim('"');
+    }
+
+    private string LireValeurString(string json, string cle)
+    {
+        string marqueur = "\"" + cle + "\": \"";
+        int posDebut    = json.IndexOf(marqueur);
+        if (posDebut == -1) return "";
+        posDebut       += marqueur.Length;
+        int posFin      = json.IndexOf("\"", posDebut);
+        if (posFin == -1) return "";
+        return json.Substring(posDebut, posFin - posDebut);
+    }
+
+    private string ModifierValeur(string json, string cle, string val, bool estTexte)
+    {
+        string marqueur = "\"" + cle + "\": ";
+        int posDebut = json.IndexOf(marqueur);
+        if (posDebut == -1) return json;
+        posDebut += marqueur.Length;
+        int posFin = json.IndexOfAny(new char[] { ',', '\n', '}' }, posDebut);
+        string ancienne = json.Substring(posDebut, posFin - posDebut);
+        string nouvelle = estTexte ? "\"" + val + "\"" : val;
+        return json.Substring(0, posDebut) + nouvelle + json.Substring(posDebut + ancienne.Length);
+    }
+}

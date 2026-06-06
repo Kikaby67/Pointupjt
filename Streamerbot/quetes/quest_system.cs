@@ -48,7 +48,14 @@ public class CPHInline
 
         if (LireValeur(json, "enCombat") == "true")
         {
-            CPH.SendMessage(nomJoueur + ", tu es actuellement en combat. Termine ton combat avant de commencer une nouvelle quête.");
+            string ennemiEnCours = LireValeur(json, "ennemiNom");
+            CPH.SendMessage(nomJoueur + ", tu es face à " + ennemiEnCours + " ! Tape !combat pour te battre, !fuir pour lui échapper ou !discuter afin de tenter ta chance.");
+            return true;
+        }
+
+        if (int.Parse(LireValeur(json, "pvActuels")) <= 0)
+        {
+            CPH.SendMessage(nomJoueur + ", tu es à terre (0 PV). Repose-toi dans l'Antre (!repos), soigne-toi (!soin) ou bois une !utiliser Potion avant de repartir en quête.");
             return true;
         }
 
@@ -60,7 +67,7 @@ public class CPHInline
             if (LireValeur(json, "enRencontre") == "true")
             {
                 string ennemNom = LireValeur(json, "ennemiNom");
-                CPH.SendMessage(nomJoueur + ", tu es en pleine rencontre contre un " + ennemNom + " ! Concentre-toi sur le combat !");
+                CPH.SendMessage(nomJoueur + ", tu es en pleine rencontre contre " + ennemNom + " ! Tape !combat pour te battre, !fuir pour lui échapper ou !discuter afin de tenter ta chance.");
                 return true;
             }
 
@@ -85,6 +92,7 @@ public class CPHInline
 
             json = ModifierValeur(json, "enQuete", "false", false);
             json = ModifierValeur(json, "queteTicksRestants", "0", false);
+            json = ModifierValeur(json, "compagnonActif", "", true);
 
             if (succes)
             {

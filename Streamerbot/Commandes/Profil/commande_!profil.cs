@@ -48,10 +48,12 @@ public class CPHInline
         int manaActuels = int.Parse(LireValeur(json, "manaActuels"));
         int manaMax    = int.Parse(LireValeur(json, "manaMax"));
         int charisme   = int.Parse(LireValeur(json, "charisme"));
+        int agilite    = int.Parse(LireValeur(json, "agilite"));
 
         string msg3 = nomJoueur + " — PV : " + pvActuels + "/" + pvMax + " | CA : " + ca + " | Atq : +" + atq;
         if (manaMax > 0) msg3 += " | Mana : " + manaActuels + "/" + manaMax;
         if (charisme > 0) msg3 += " | Charisme : " + charisme;
+        if (agilite > 0) msg3 += " | Agilité : " + agilite;
         CPH.SendMessage(msg3);
 
         // Message 4 : stats + items équipés
@@ -60,10 +62,12 @@ public class CPHInline
         int quetesTerminees = int.Parse(LireValeur(json, "quetesTerminees"));
         bool enCombat = LireValeur(json, "enCombat") == "true";
         bool enQuete  = LireValeur(json, "enQuete")  == "true";
+        string compagnon = LireValeur(json, "compagnonActif");
 
         string msg4 = nomJoueur + " — Combats : " + combatsGagnes + "V/" + combatsPerdus + "D | Quêtes : " + quetesTerminees;
-        if (enCombat) msg4 += " | EN COMBAT";
+        if (enCombat) msg4 += " | EN RENCONTRE";
         else if (enQuete) msg4 += " | EN QUETE";
+        if (compagnon != "" && compagnon != "0") msg4 += " | Compagnon : " + compagnon;
 
         string armeEq   = LireValeur(json, "armeEquipee");
         string armureEq = LireValeur(json, "armureEquipee");

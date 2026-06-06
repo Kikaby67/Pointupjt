@@ -5,6 +5,7 @@ public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
@@ -54,19 +55,24 @@ public class CPHInline
         int caBase       = int.Parse(LireValeur(cfg, classeNom + "_caBase"));
         int manaBase     = int.Parse(LireValeur(cfg, classeNom + "_manaBase"));
         int charismeBase = int.Parse(LireValeur(cfg, classeNom + "_charisme"));
+        int agiliteBase  = int.Parse(LireValeur(cfg, classeNom + "_agilite"));
         string typeArme  = LireValeur(cfg, classeNom + "_typeArme");
 
-        // ── Jets de dés ───────────────────────────────────────
+        // ── Jets de dés (faces définies dans config_global) ───
+        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
         Random rng = new Random();
 
-        int jetPV        = rng.Next(1, 7);  // 1d6 → 1 à 6
-        int jetCA        = rng.Next(1, 5);  // 1d4 → 1 à 4
-        int bonusAttaque = rng.Next(1, 5);  // 1d4 → 1 à 4
+        int jetPV        = rng.Next(1, int.Parse(LireValeur(cfgG, "creation_pv_de"))  + 1);  // 1dN PV
+        int jetCA        = rng.Next(1, int.Parse(LireValeur(cfgG, "creation_ca_de"))  + 1);  // 1dN CA
+        int bonusAttaque = rng.Next(1, int.Parse(LireValeur(cfgG, "creation_atq_de")) + 1);  // 1dN Atq
 
         int pvFinal  = pvBase  + jetPV;
         int caFinale = caBase  + jetCA;
 
         // ── Sauvegarde dans le JSON ───────────────────────────
+        json = EnsureChamp(json, "agilite",        "0", false);   // champs récents (anciens profils)
+        json = EnsureChamp(json, "compagnonActif", "",  true);
+        json = EnsureChamp(json, "rencontreExpire", "0", false);
         json = ModifierValeur(json, "classeChoisie", "true",                  false);
         json = ModifierValeur(json, "classe",         classeNom,              true);
         json = ModifierValeur(json, "typeArme",       typeArme,               true);
@@ -77,6 +83,7 @@ public class CPHInline
         json = ModifierValeur(json, "manaMax",        manaBase.ToString(),    false);
         json = ModifierValeur(json, "manaActuels",    manaBase.ToString(),    false);
         json = ModifierValeur(json, "charisme",       charismeBase.ToString(),false);
+        json = ModifierValeur(json, "agilite",        agiliteBase.ToString(), false);
 
         File.WriteAllText(cheminFichier, json);
 
@@ -92,6 +99,15 @@ public class CPHInline
             "Arme : " + typeArme);
 
         return true;
+    }
+
+    // Insère un champ s'il est absent du JSON (anciens profils)
+    private string EnsureChamp(string json, string cle, string valeurDefaut, bool estTexte)
+    {
+        if (json.Contains("\"" + cle + "\"")) return json;
+        int    pos = json.LastIndexOf('}');
+        string val = estTexte ? "\"" + valeurDefaut + "\"" : valeurDefaut;
+        return json.Substring(0, pos) + ",\n  \"" + cle + "\": " + val + "\n}";
     }
 
     // ── LireValeur ────────────────────────────────────────────

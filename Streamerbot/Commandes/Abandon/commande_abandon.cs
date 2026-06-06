@@ -33,7 +33,7 @@ public class CPHInline
 
         if (LireValeur(json, "enCombat") == "true")
         {
-            CPH.SendMessage(nomJoueur + ", impossible d'abandonner en plein combat — bats-toi ou fuis d'abord !");
+            CPH.SendMessage(nomJoueur + ", impossible d'abandonner en pleine rencontre — résous-la d'abord (!combat, !discuter ou !fuir) !");
             return true;
         }
 
@@ -49,6 +49,8 @@ public class CPHInline
         json = ModifierValeur(json, "queteDernierTick",      "0",     false);
         json = ModifierValeur(json, "enRencontre",           "false", false);
         json = ModifierValeur(json, "rencontreType",         "",      true);
+        json = ModifierValeur(json, "rencontreExpire",       "0",     false);
+        json = ModifierValeur(json, "compagnonActif",        "",      true);
         json = ModifierValeur(json, "quetePauseDebut",       "0",     false);
         json = ModifierValeur(json, "queteTotalPause",       "0",     false);
         json = ModifierValeur(json, "dernierCheckRencontre", "0",     false);

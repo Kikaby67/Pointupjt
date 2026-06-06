@@ -32,6 +32,7 @@
     "Marteau-Carapace_manaBonus": 0,
     "Marteau-Carapace_charismeBonus": 1,
     "Marteau-Carapace_caBonus": 0,
+    "Marteau-Carapace_poids": 1,
     "Marteau-Carapace_prixVente": 150,
     "Marteau-Carapace_description": "Marteau forgé à partir d'un fragment de carapace ancienne. Lourd et immuable. +1 attaque · +1 charisme",
 
@@ -59,6 +60,7 @@
     "Armure-d'ecorce_manaBonus": 0,
     "Armure-d'ecorce_caBonus": 2,
     "Armure-d'ecorce_charismeBonus": 2,
+    "Armure-d'ecorce_poids": 1,
     "Armure-d'ecorce_prixVente": 150,
     "Armure-d'ecorce_description": "Armure taillée dans l'écorce d'un chêne-serveur. Légère et vivante. +2 CA · +2 charisme",
 
@@ -86,6 +88,7 @@
     "Apparat-Système_manaBonus": 0,
     "Apparat-Système_caBonus": 2,
     "Apparat-Système_charismeBonus": 1,
+    "Apparat-Système_poids": 2,
     "Apparat-Système_prixVente": 160,
     "Apparat-Système_description": "Tenue de cérémonie du réseau. Imposante et bien protégée. +2 CA · +1 charisme",
 
@@ -95,6 +98,7 @@
     "Armure-renforcée_manaBonus": 0,
     "Armure-renforcée_caBonus": 3,
     "Armure-renforcée_charismeBonus": 0,
+    "Armure-renforcée_poids": 3,
     "Armure-renforcée_prixVente": 200,
     "Armure-renforcée_description": "Armure lourde forgée dans du silicium brut. Indestructible. +3 CA",
 

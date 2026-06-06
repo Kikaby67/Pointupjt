@@ -53,6 +53,7 @@ public class CPHInline
             "  \"manaMax\": 0,\n"       +
             "  \"manaActuels\": 0,\n"   +
             "  \"charisme\": 0,\n"      +
+            "  \"agilite\": 0,\n"      +
 
             "  \"enCombat\": false,\n" +
             "  \"enQuete\": false,\n"  +
@@ -64,6 +65,8 @@ public class CPHInline
             "  \"queteCooldownFin\": 0,\n"      +
             "  \"enRencontre\": false,\n"       +
             "  \"rencontreType\": \"\",\n"      +
+            "  \"rencontreExpire\": 0,\n"       +
+            "  \"compagnonActif\": \"\",\n"     +
             "  \"dernierCheckRencontre\": 0,\n" +
             "  \"reposCooldownFin\": 0,\n"      +
             "  \"queteEventsUsed\": 0,\n"       +

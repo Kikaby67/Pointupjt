@@ -4,9 +4,7 @@ using System.IO;
 public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
-    private const string CONFIG_ENNEMIS  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_ennemis.json";
     private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
-    private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
     private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
@@ -22,94 +20,50 @@ public class CPHInline
 
         string json = File.ReadAllText(cheminFichier);
 
-        if (LireValeur(json, "enCombat") != "true")
+        if (LireValeur(json, "classeChoisie") != "true")
         {
-            CPH.SendMessage(nomJoueur + ", tu n'es pas en combat !");
+            CPH.SendMessage(nomJoueur + ", choisis d'abord une classe avec !choisirclasse !");
+            return true;
+        }
+
+        // Soin désormais HORS combat uniquement
+        if (LireValeur(json, "enCombat") == "true")
+        {
+            CPH.SendMessage(nomJoueur + ", impossible de te soigner en pleine rencontre ! Choisis !combat, !discuter ou !fuir.");
             return true;
         }
 
         string classe     = LireValeur(json, "classe");
-        string sousClasse = LireValeur(json, "sousClasse");
-        string ennemNom   = LireValeur(json, "ennemiNom");
-        int joueurPV      = int.Parse(LireValeur(json, "pvActuels"));
-        int joueurPVMax   = int.Parse(LireValeur(json, "pvMax"));
-        int joueurCA      = int.Parse(LireValeur(json, "classeArmure"));
-        int caItemBonus   = GetBonusItems(json, "caBonus");
-        int mana          = int.Parse(LireValeur(json, "manaActuels"));
-        int tour          = int.Parse(LireValeur(json, "tourCombat"));
+        string sousClasse  = LireValeur(json, "sousClasse");
+        int joueurPV       = int.Parse(LireValeur(json, "pvActuels"));
+        int joueurPVMax    = int.Parse(LireValeur(json, "pvMax"));
+        int mana           = int.Parse(LireValeur(json, "manaActuels"));
+        int manaCout       = int.Parse(LireValeur(File.ReadAllText(CONFIG_GLOBAL), "combat_mana_cout_soin"));
 
-        int[] ennemStats  = GetEnnemiStats(ennemNom);
-        int ennemDiceMax  = ennemStats[1];
-        int manaCout      = int.Parse(LireValeur(File.ReadAllText(CONFIG_GLOBAL), "combat_mana_cout_soin"));
-
-        Random rng = new Random();
-        string msgSoin;
-
-        // === SOIN ===
-        if (mana < manaCout)
+        if (joueurPV >= joueurPVMax)
         {
-            msgSoin = nomJoueur + ", pas assez de mana (" + mana + "/" + manaCout + " requis) ! Le soin échoue.";
-        }
-        else
-        {
-            int soinRoll       = RollSoin(classe, sousClasse, rng);
-            int nouveauPV      = Math.Min(joueurPV + soinRoll, joueurPVMax);
-            int soinsEffectifs = nouveauPV - joueurPV;
-            json = ModifierValeur(json, "pvActuels",   nouveauPV.ToString(),          false);
-            json = ModifierValeur(json, "manaActuels", (mana - manaCout).ToString(),  false);
-            joueurPV = nouveauPV;
-            msgSoin = nomJoueur + " se soigne +" + soinsEffectifs + " PV → " + joueurPV + "/" + joueurPVMax + " PV (" + (mana - manaCout) + " mana restant)";
-        }
-
-        // === RIPOSTE DE L'ENNEMI (toujours, même si soin raté) ===
-        int    joueurCAEff  = joueurCA + caItemBonus;
-        int    d20Ennemi    = rng.Next(1, 21);
-        bool   ennemiTouche = d20Ennemi >= joueurCAEff;
-        string msgRiposte;
-        if (ennemiTouche)
-        {
-            int degatsEnnemi = rng.Next(1, ennemDiceMax + 1);
-            joueurPV = Math.Max(0, joueurPV - degatsEnnemi);
-            json = ModifierValeur(json, "pvActuels", joueurPV.ToString(), false);
-            msgRiposte = ennemNom + " profite de l'ouverture (d20: " + d20Ennemi + " vs CA " + joueurCAEff + ") → TOUCHÉ ! -" + degatsEnnemi + " PV → " + nomJoueur + " : " + joueurPV + "/" + joueurPVMax + " PV";
-        }
-        else
-        {
-            msgRiposte = ennemNom + " tente de frapper pendant le soin (d20: " + d20Ennemi + " vs CA " + joueurCAEff + ") → RATÉ !";
-        }
-
-        // === DÉFAITE ? ===
-        if (joueurPV <= 0)
-        {
-            json = ModifierValeur(json, "enCombat", "false", false);
-            json = ModifierValeur(json, "tourCombat", (tour + 1).ToString(), false);
-            json = AjouterValeur(json, "combatsPerdus", 1);
-            File.WriteAllText(cheminFichier, json);
-            CPH.SendMessage(msgSoin);
-            CPH.SendMessage(msgRiposte);
-            CPH.SendMessage(nomJoueur + " s'effondre à 0 PV !");
+            CPH.SendMessage(nomJoueur + ", tu as déjà tous tes PV (" + joueurPV + "/" + joueurPVMax + ") !");
             return true;
         }
 
-        json = ModifierValeur(json, "tourCombat", (tour + 1).ToString(), false);
-        File.WriteAllText(cheminFichier, json);
-        CPH.SendMessage(msgSoin);
-        CPH.SendMessage(msgRiposte);
-        return true;
-    }
-
-    private int GetBonusItems(string json, string stat)
-    {
-        string   cfgItems = File.ReadAllText(CONFIG_ITEMS);
-        string[] slots    = { "armeEquipee", "armureEquipee", "accessoireEquipe" };
-        int total = 0;
-        foreach (string slot in slots)
+        if (mana < manaCout)
         {
-            string item = LireValeur(json, slot);
-            if (item != "" && item != "0")
-                total += int.Parse(LireValeur(cfgItems, item + "_" + stat));
+            CPH.SendMessage(nomJoueur + ", pas assez de mana (" + mana + "/" + manaCout + " requis) pour te soigner.");
+            return true;
         }
-        return total;
+
+        Random rng         = new Random();
+        int soinRoll       = RollSoin(classe, sousClasse, rng);
+        int nouveauPV      = Math.Min(joueurPV + soinRoll, joueurPVMax);
+        int soinsEffectifs = nouveauPV - joueurPV;
+
+        json = ModifierValeur(json, "pvActuels",   nouveauPV.ToString(),         false);
+        json = ModifierValeur(json, "manaActuels", (mana - manaCout).ToString(), false);
+        File.WriteAllText(cheminFichier, json);
+
+        CPH.SendMessage(nomJoueur + " canalise l'énergie d'Arbonet et se soigne +" + soinsEffectifs + " PV → "
+            + nouveauPV + "/" + joueurPVMax + " PV (" + (mana - manaCout) + " mana restant).");
+        return true;
     }
 
     private int RollSoin(string classe, string sousClasse, Random rng)
@@ -121,24 +75,6 @@ public class CPHInline
         int soinBonus = int.Parse(LireValeur(cfg, key + "_soinBonus"));
         if (soinMax == 0) soinMax = int.Parse(LireValeur(cfgG, "soin_max_defaut"));
         return rng.Next(1, soinMax + 1) + soinBonus;
-    }
-
-    private int[] GetEnnemiStats(string nom)
-    {
-        string cfg  = File.ReadAllText(CONFIG_ENNEMIS);
-        string cfgG = File.ReadAllText(CONFIG_GLOBAL);
-        int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
-        int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
-        return new int[] {
-            ca        != 0 ? ca        : int.Parse(LireValeur(cfgG, "ennemi_ca_defaut")),
-            degatsMax != 0 ? degatsMax : int.Parse(LireValeur(cfgG, "ennemi_degats_defaut"))
-        };
-    }
-
-    private string AjouterValeur(string json, string cle, int montant)
-    {
-        int val = int.Parse(LireValeur(json, cle));
-        return ModifierValeur(json, cle, (val + montant).ToString(), false);
     }
 
     private string LireValeur(string json, string cle)

@@ -5,6 +5,7 @@ public class CPHInline
 {
     private const string DOSSIER_JOUEURS = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\joueurs";
     private const string CONFIG_ALLIES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_allies.json";
+    private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
 
     public bool Execute()
     {
@@ -35,7 +36,6 @@ public class CPHInline
         {
             string cfgA        = File.ReadAllText(CONFIG_ALLIES);
             int    chanceCombat = int.Parse(LireValeur(cfgA, "vieux_sage_chance_combat"));
-            int    pvSage      = int.Parse(LireValeur(cfgA, "vieux_sage_pv"));
             Random rng         = new Random();
 
             // Un seul roll : soit combat, soit le sage disparaît
@@ -43,26 +43,22 @@ public class CPHInline
 
             if (combat)
             {
-                // Lancer le combat comme une rencontre normale
-                // Si en quête → pauser la quête (enRencontre = true)
-                bool enQuete = LireValeur(json, "enQuete") == "true";
-                if (enQuete)
-                {
-                    long maintenant = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    json = ModifierValeur(json, "enRencontre",    "true",                true);  // pause quête
-                    json = ModifierValeur(json, "rencontreType",  "combat",              true);
-                    json = ModifierValeur(json, "quetePauseDebut", maintenant.ToString(), false);
-                }
+                // Pose une rencontre à choix unique (!combat / !discuter / !fuir)
+                long maintenant = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                int  expireSecs = int.Parse(LireValeur(File.ReadAllText(CONFIG_GLOBAL), "rencontre_expire_secondes"));
 
-                json = ModifierValeur(json, "enCombat",        "true",         false);
-                json = ModifierValeur(json, "ennemiNom",       "Vieux-Sage",   true);
-                json = ModifierValeur(json, "ennemiPVActuels", pvSage.ToString(), false);
-                json = ModifierValeur(json, "tourCombat",      "1",            false);
-                json = ModifierValeur(json, "buffActif",       "false",        false);
-                json = ModifierValeur(json, "protectionActive","false",        false);
+                json = EnsureChamp(json, "rencontreExpire", "0", false);
+                if (LireValeur(json, "enQuete") == "true")
+                    json = ModifierValeur(json, "quetePauseDebut", maintenant.ToString(), false);  // pause quête
+
+                json = ModifierValeur(json, "enRencontre",     "true",                          false);
+                json = ModifierValeur(json, "rencontreType",   "combat",                        true);
+                json = ModifierValeur(json, "enCombat",        "true",                          false);
+                json = ModifierValeur(json, "ennemiNom",       "Vieux-Sage",                    true);
+                json = ModifierValeur(json, "rencontreExpire", (maintenant + expireSecs).ToString(), false);
 
                 File.WriteAllText(cheminFichier, json);
-                CPH.SendMessage(nomJoueur + ", tu refuses le marché — le Vieux Sage se lève, les yeux brillants de colère ! Bats-toi !");
+                CPH.SendMessage(nomJoueur + ", tu refuses le marché — le Vieux Sage se lève, les yeux brillants de colère ! Tape !combat pour te battre, !fuir pour lui échapper ou !discuter afin de tenter ta chance.");
             }
             else
             {
@@ -83,6 +79,14 @@ public class CPHInline
         }
 
         return true;
+    }
+
+    private string EnsureChamp(string json, string cle, string valeurDefaut, bool estTexte)
+    {
+        if (json.Contains("\"" + cle + "\"")) return json;
+        int    pos = json.LastIndexOf('}');
+        string val = estTexte ? "\"" + valeurDefaut + "\"" : valeurDefaut;
+        return json.Substring(0, pos) + ",\n  \"" + cle + "\": " + val + "\n}";
     }
 
     private string LireValeur(string json, string cle)

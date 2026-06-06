@@ -43,10 +43,12 @@ Pointu-PJT/
 │   │   ├── quest_system.cs      # !quete (lancer / consulter)
 │   │   └── quest_timer.cs       # Timer QuestCheck (30s, auto-résolution + rencontres)
 │   ├── combat/
-│   │   ├── combat_attaque.cs    # !attaque
-│   │   ├── combat_soin.cs       # !soin
-│   │   ├── combat_defense.cs    # !defense
-│   │   └── combat_fuir.cs       # !fuir
+│   │   ├── commande_combat.cs   # !combat (rencontre)
+│   │   ├── commande_discuter.cs # !discuter (rencontre)
+│   │   ├── combat_fuir.cs       # !fuir (rencontre)
+│   │   ├── combat_soin.cs       # !soin (HORS combat)
+│   │   ├── combat_attaque.cs    # !attaque (DÉPRÉCIÉ → redirige)
+│   │   └── combat_defense.cs    # !defense (DÉPRÉCIÉ → redirige)
 │   ├── Timer_Xp/
 │   │   └── Timer_XP_visionnage.cs
 │   └── Reward/
@@ -151,27 +153,40 @@ Pour rééquilibrer le jeu : modifier le JSON uniquement, zéro code à toucher.
 ```
 max_sac                        ← taille max de l'inventaire (8)
 repos_cooldown_secondes        ← cooldown !repos (1800 = 30 min)
-combat_mana_cout_soin          ← coût mana de !soin (5)
-combat_defense_bonus_ca        ← bonus CA de !defense ce tour (3)
-combat_fuite_seuil_normal      ← d20 minimum pour fuir (12)
-combat_fuite_seuil_cryptolame  ← d20 minimum pour fuir en Cryptolame (8)
+combat_mana_cout_soin          ← coût mana de !soin HORS combat (5)
 quete_taux_echec               ← % d'échec de quête (20)
-quete_chance_rencontre         ← % de rencontre toutes les 3 min (40)
-quete_chance_loot_artefact     ← % de loot sur quête artefact (70)
-quete_chance_ecorce            ← % de drop morceau d'écorce (20)
-quete_cooldown_defaite_secondes ← cooldown après défaite en quête (600 = 10 min)
+quete_chance_rencontre         ← % de rencontre par check (50)
+quete_rencontre_intervalle_secondes ← intervalle entre 2 checks de rencontre (180)
+quete_chance_loot_artefact     ← % de loot sur quête artefact (60)
+quete_chance_ecorce            ← % de drop morceau d'écorce (5)
+quete_cooldown_defaite_secondes ← cooldown après défaite (600 = 10 min)
 quete_cooldown_abandon_secondes ← cooldown après !abandon (300 = 5 min)
-timer_xp_gain                  ← XP gagnés toutes les 15 min (5)
-timer_regen_pv                 ← PV régénérés toutes les 15 min hors combat (2)
-timer_regen_mana               ← Mana régénéré toutes les 15 min hors combat (3)
+timer_xp_gain / timer_regen_pv / timer_regen_mana ← timer 15 min (5 / 2 / 3)
 
-ennemi_ca_defaut               ← CA de repli si absent du config (12)
-ennemi_degats_defaut           ← Dégâts de repli si absent du config (6)
-ennemi_xp_defaut               ← XP de repli si absent du config (15)
-ennemi_ram_defaut              ← RAM de repli si absent du config (3)
-attaque_degats_defaut          ← Dégâts max de repli (8)
-attaque_des_defaut             ← Nombre de dés de repli (1)
-soin_max_defaut                ← Soin max de repli (4)
+rencontre_ennemis              ← CSV des ennemis de rencontre de quête
+rencontre_expire_secondes      ← délai avant fuite auto d'une rencontre (120)
+
+— !combat —
+combat_base_pct (50) · combat_plancher_joueur (20) · combat_plafond_joueur (80) · combat_min/max (20/100)
+combat_pv_ref/tranche/pct (16/5/3) · combat_ca_ref/tranche/pct (12/2/3) · combat_atk_ref/tranche/pct (2/2/3)
+combat_tier_faible_mod (100) · combat_tier_moyen_mod (0) · combat_tier_fort_mod (-20)
+combat_pv_perte_diviseur (4) · combat_pv_perte_echec_facteur (3) · combat_pv_perte_alea (2)
+compagnon_combat_bonus (15)    ← bonus % du compagnon recruté
+
+— !fuir —
+fuite_base_pct (30) · fuite_agilite_pct (3) · fuite_poids_pct (6) · fuite_min/max (10/95) · agilite_defaut (8)
+
+— !discuter —
+discuter_base_pct (25) · discuter_charisme_pct (3) · discuter_min/max (10/90)
+
+— création (!choisirclasse) —
+creation_pv_de (6) · creation_ca_de (4) · creation_atq_de (4)
+
+— replis —
+ennemi_ca_defaut (12) · ennemi_degats_defaut (6) · ennemi_xp_defaut (15) · ennemi_ram_defaut (3) · soin_max_defaut (4)
+
+⚠️ Obsolètes (ancien combat tour par tour, plus lus) : combat_defense_bonus_ca,
+   combat_fuite_seuil_normal, combat_fuite_seuil_cryptolame, attaque_degats_defaut, attaque_des_defaut
 ```
 
 ### `config_quetes.json` — Format quêtes
@@ -201,9 +216,9 @@ Clés format plat : `"NomClasse_stat": valeur`
 **Stats de classe** (utilisées à la création + combat) :
 ```
 _pvBase, _caBase, _manaBase, _charisme, _typeArme
-_degatsMax, _nbDes          ← dés de dégâts en combat
-_nbAttaques                 ← nombre d'attaques (si > 1 → multi-attaque)
+_agilite                    ← base de la stat agilité (réussite de !fuir) — posée à la création
 _soinMax, _soinBonus        ← dés de soin (!soin)
+_degatsMax, _nbDes, _nbAttaques   ← OBSOLÈTES (ancien combat tour par tour)
 ```
 
 **Stats de sous-classe** (deux catégories) :
@@ -235,7 +250,9 @@ string key = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "
 
 Clés format plat : `"NomEnnemi_stat": valeur`
 ```
-_pv, _ca, _degatsMax, _xp, _ram
+_xp, _ram        ← récompenses (gagnées sur une victoire !combat)
+_tier            ← "faible" | "moyen" | "fort" → modifie la chance de combat (100 / 80 / 60 % de réf.)
+_pv, _ca, _degatsMax   ← OBSOLÈTES (ancien combat tour par tour ; gardés pour compat)
 ```
 
 ---
@@ -262,6 +279,7 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
   "manaMax": 0,
   "manaActuels": 0,
   "charisme": 0,
+  "agilite": 0,
   "enCombat": false,
   "enQuete": false,
   "queteId": "",
@@ -269,6 +287,8 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
   "queteDernierTick": 0,
   "enRencontre": false,
   "rencontreType": "",
+  "rencontreExpire": 0,
+  "compagnonActif": "",
   "quetePauseDebut": 0,
   "queteTotalPause": 0,
   "queteCooldownFin": 0,
@@ -292,9 +312,13 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
 
 > ⚠️ L'ancien format (`xp`, `sac`) est obsolète. Le champ XP s'appelle `experience`.
 >
-> Les champs combat (`ennemiNom`, `ennemiPVActuels`, `buffActif`, `tourCombat`) sont dans `combatActuel` (objet imbriqué). `LireValeur` les trouve par recherche de chaîne.
+> Les champs combat sont dans `combatActuel` (objet imbriqué) ; `LireValeur` les trouve par recherche de chaîne.
+> Seul `ennemiNom` est encore utilisé (le combat n'est plus tour par tour) — `ennemiPVActuels`, `buffActif`,
+> `protectionActive`, `tourCombat` sont **obsolètes** (laissés pour compat).
 >
-> `reposCooldownFin` : absent des anciens fichiers joueurs, à ajouter manuellement (valeur 0).
+> Champs récents : `agilite` (posé à la création depuis la classe), `compagnonActif` (allié recruté, `""` si aucun),
+> `rencontreExpire` (timestamp d'expiration de la rencontre). Ajoutés aux anciens profils via `EnsureChamp` ; déjà
+> présents sur tous les profils actuels.
 
 ---
 
@@ -314,22 +338,24 @@ Utilisé uniquement pour les rencontres manuelles lancées par le streamer.
 
 ## Les 5 classes
 
-| Classe | PV | CA | Mana | Charisme | Arme | Dégâts | Soin |
-|--------|----|----|------|---------|------|--------|------|
-| Hexadécimeur | 25 | 14 | 5 | 8 | Épée | 1d8 | 1d4 |
-| Cryptolame | 16 | 13 | 5 | 11 | Double-Dagues | 1d6 ×2 att. | 1d4 |
-| Hackmancien | 14 | 10 | 30 | 10 | Bâton-Magique | 1d12 | 1d6 |
-| Firewaller | 22 | 15 | 25 | 13 | Marteau-Rune | 1d8 | 1d8+3 |
-| Algorythmancien | 16 | 11 | 20 | 16 | Luth-Code | 1d8 | 1d6 |
+| Classe | PV | CA | Mana | Charisme | Agilité | Arme | Soin |
+|--------|----|----|------|---------|--------|------|------|
+| Hexadécimeur | 25 | 14 | 5 | 8 | 8 | Épée | 1d4 |
+| Cryptolame | 16 | 13 | 5 | 11 | 14 | Double-Dagues | 1d4 |
+| Hackmancien | 14 | 10 | 30 | 10 | 10 | Bâton-Magique | 1d6 |
+| Firewaller | 22 | 15 | 25 | 13 | 8 | Marteau-Rune | 1d8+3 |
+| Algorythmancien | 16 | 11 | 20 | 16 | 12 | Luth-Code | 1d6 |
 
 > ⚠️ Le nom exact en code est `"Algorythmancien"` (pas `"Algorythmien"`).
+> Charisme → réussite de `!discuter` · Agilité → réussite de `!fuir`.
 
 Toutes ces valeurs sont dans `config_classes.json`. Le code ne les duplique pas.
 
-**Jets de création** :
-- PV final = pvBase + `rng.Next(1, 7)` (1d6 → +1 à +6)
-- CA finale = caBase + `rng.Next(1, 5)` (1d4 → +1 à +4)
-- bonusAttaque = `rng.Next(1, 5)` (1d4 → +1 à +4)
+**Jets de création** (faces dans `config_global` : `creation_pv_de`/`creation_ca_de`/`creation_atq_de`) :
+- PV final = pvBase + 1d`creation_pv_de` (défaut 1d6)
+- CA finale = caBase + 1d`creation_ca_de` (défaut 1d4)
+- bonusAttaque = 1d`creation_atq_de` (défaut 1d4)
+- `agilite` = valeur de classe (`<classe>_agilite`)
 
 ---
 
@@ -399,18 +425,17 @@ private string AppliquerBonusNiveau(string json, int niveau)
 
 ## Ennemis
 
-Toutes les stats ennemis sont dans `config_ennemis.json`. Les méthodes de lookup lisent le fichier :
+Stats ennemis dans `config_ennemis.json`. Avec le nouveau combat, seuls **`_tier`** (chance de `!combat`) et
+**`_xp`/`_ram`** (récompenses) sont lus. `_pv`/`_ca`/`_degatsMax` sont conservés mais **obsolètes**.
 
 ```csharp
-private int[] GetEnnemiStats(string nom)
+private string GetEnnemiTier(string nom)   // commande_combat.cs
 {
-    string cfg    = File.ReadAllText(CONFIG_ENNEMIS);
-    int ca        = int.Parse(LireValeur(cfg, nom + "_ca"));
-    int degatsMax = int.Parse(LireValeur(cfg, nom + "_degatsMax"));
-    return new int[] { ca != 0 ? ca : 12, degatsMax != 0 ? degatsMax : 6 };
+    string t = LireValeurString(File.ReadAllText(CONFIG_ENNEMIS), nom + "_tier");
+    return t == "" ? "moyen" : t;          // faible / moyen / fort
 }
 
-private int[] GetRecompensesEnnemi(string nom)   // combat_attaque.cs uniquement
+private int[] GetRecompensesEnnemi(string nom)   // XP/RAM sur victoire !combat
 {
     string cfg = File.ReadAllText(CONFIG_ENNEMIS);
     int xp  = int.Parse(LireValeur(cfg, nom + "_xp"));
@@ -418,6 +443,10 @@ private int[] GetRecompensesEnnemi(string nom)   // combat_attaque.cs uniquement
     return new int[] { xp != 0 ? xp : 15, ram != 0 ? ram : 3 };
 }
 ```
+
+> Liste des ennemis de rencontre = clé `rencontre_ennemis` (CSV) dans `config_global.json`.
+> Paliers actuels : Drone-racine/Insecte-Bug = faible · Martre/Taupe/Parasite/Ombre/Sentinelle/Corbeau = moyen ·
+> Sanglier-Crash/Castor-Rootkit/Loup-Firewall/Vieux-Sage = fort.
 
 ### Ennemis de rencontre de quête
 
@@ -485,6 +514,7 @@ Trigger : Command Triggered → !sousclasse
 Restauration complète hors combat + hors quête.
 - Restaure `pvActuels = pvMax` et `manaActuels = manaMax`
 - Cooldown 30 minutes via `reposCooldownFin` (timestamp Unix)
+- **Fonctionne à 0 PV** (à terre) : c'est ainsi qu'on se remet d'un effondrement.
 ```
 Trigger : Command Triggered → !repos
 ```
@@ -528,94 +558,97 @@ Trigger : Command Triggered → !quete
 ```
 
 ### `quest_timer.cs` — Timer QuestCheck (30s)
-Parcourt tous les fichiers joueurs. Pour chaque joueur `enQuete == true` :
+Parcourt tous les fichiers joueurs. Pour chaque joueur `enQuete == true` (ajoute au passage `rencontreExpire` /
+`compagnonActif` aux anciens profils via `EnsureChamp`) :
 
-**CAS 1** — `enRencontre == true` et `enCombat == false` :
-- `pvActuels > 0` → victoire : reprend la quête, `quetesTerminees += 1`
-- `pvActuels <= 0` → défaite : `enQuete = false`, `queteCooldownFin = maintenant + 1200` (20 min)
+**CAS 1** — `enRencontre == true` (rencontre en attente) :
+- Si `maintenant > rencontreExpire` → **fuite automatique** (le joueur a ignoré la rencontre) : quête reprend.
+- Sinon → on attend le choix du joueur. La résolution est faite par `!combat`/`!discuter`/`!fuir`, **plus** par le timer.
 
-**CAS 2** — Check rencontre toutes les 3 min :
-- 40% chance, parmi 3 types (Combat / Événement / Marchand)
-- Marchand : soigne les PV + vend une Potion-Recharge pour 30 RAM si sac < 8 items et joueur a ≥ 30 RAM
+**CAS 2** — Check rencontre tous les `quete_rencontre_intervalle_secondes` (180 s) :
+- `quete_chance_rencontre`% de chance, parmi 3 types : **Combat** / **Événement** / **Marchand**.
+- **Combat** : pose une rencontre en attente (ennemi tiré de `rencontre_ennemis`, CSV config_global) + message 3 choix + `rencontreExpire`.
+- **Marchand** : pose l'offre `marchand_soin` (soin via `!accepter`) **et** annonce la Potion (`!acheter`). **Plus de vente forcée**.
+- **Événement** : pool de 8 événements (bonus/malus instantanés, dont l'offre du Vieux Sage) — inchangé.
 
-**CAS 3** — Fin de quête : 80% succès / 20% échec
-- Succès artefact uniquement : 70% chance de loot 1 item parmi `{ Ligne-Reseau, Morceau-Arbre-Serveur, Potion-Recharge, Bague-de-protection, Armure-de-feuille, Gants-de-force }` si sac < 8
+**CAS 3** — Fin de quête : succès `(100 - quete_taux_echec)%`. Vide `compagnonActif`.
+- Succès artefact : `quete_chance_loot_artefact`% de loot 1 item de `loot_commun` (config_quetes) si sac < `max_sac`.
+- Drop d'écorce gravée : `quete_chance_ecorce`% (lettres manquantes uniquement).
 ```
 Trigger : Timed Action → QuestCheck (30s, repeat)
 ```
 
-### `!attaque` → `combat/combat_attaque.cs`
-Combat tour par tour — **seulement si `enCombat == true`**.
+### Rencontres à choix unique — `!combat` / `!discuter` / `!fuir`
 
-**Logique d'attaque entièrement config-driven :**
-1. Lit `_nbAttaques` depuis config (sous-classe en priorité, puis classe, défaut 1)
-2. Si `nbAttaques > 1` : loop multi-attaque, chaque coup appelle `RollDegats`
-3. Sinon : attaque unique avec `RollDegats`
-4. `RollDegats` lit `_degatsMax` et `_nbDes` depuis config (sous-classe si elle a une entrée, sinon classe)
+> **Remplace l'ancien combat tour par tour.** Une rencontre se résout en **un seul message**.
+> État « rencontre en attente » : `enCombat == true` + `enRencontre == true` + `ennemiNom` (dans `combatActuel`)
+> + `rencontreExpire` (timestamp). Quête en pause (`quetePauseDebut`). Si le joueur ignore la rencontre au-delà de
+> `rencontre_expire_secondes`, `quest_timer.cs` la résout en **fuite automatique**.
+> Toutes les valeurs sont dans `config_global.json` (`combat_*`, `fuite_*`, `discuter_*`, `compagnon_*`).
 
-```csharp
-private int RollDegats(string classe, string sousClasse, Random rng)
-{
-    string cfg = File.ReadAllText(CONFIG_CLASSES);
-    string key = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "0"
-                 ? sousClasse : classe;
-    int degatsMax = int.Parse(LireValeur(cfg, key + "_degatsMax"));
-    int nbDes     = int.Parse(LireValeur(cfg, key + "_nbDes"));
-    if (degatsMax == 0) degatsMax = 8;
-    if (nbDes     == 0) nbDes     = 1;
-    int total = 0;
-    for (int i = 0; i < nbDes; i++) total += rng.Next(1, degatsMax + 1);
-    return total;
-}
+#### `!combat` → `combat/commande_combat.cs`
+Résolution probabiliste en un jet. Chance de réussite :
+```
+score = combat_base_pct
+      + ((pvMax  - combat_pv_ref ) / combat_pv_tranche ) * combat_pv_pct
+      + ((CAeff  - combat_ca_ref ) / combat_ca_tranche ) * combat_ca_pct
+      + ((ATQeff - combat_atk_ref) / combat_atk_tranche) * combat_atk_pct
+CAeff  = classeArmure + GetBonusItems("caBonus")
+ATQeff = bonusAttaque  + GetBonusItems("attaqueBonus")
+score  = clamp(score, combat_plancher_joueur, combat_plafond_joueur)   // ex. 20..80
+si compagnonActif != "" : score += compagnon_combat_bonus
+final  = clamp(score + tierMod, combat_min, combat_max)                // 20..100
+tierMod (config) : faible = +100 (→100%), moyen = 0, fort = -20
+```
+Le **palier** vient de `config_ennemis.json` (`<Ennemi>_tier` : `faible`/`moyen`/`fort`).
+Calibrage de référence (kikabygaming) : moyen 80 % · fort 60 % · faible 100 %.
+
+**Résolution** (`rng.Next(100) < final`) :
+- **Réussite** → `pvPerdus = ceil((100-final)/combat_pv_perte_diviseur) + rng(0..combat_pv_perte_alea)`,
+  +XP/+RAM de l'ennemi (`GetRecompensesEnnemi`), `combatsGagnes++`, quête reprend.
+  Si PV → 0 : effondré (quête terminée, **sans** cooldown — il faut juste se soigner).
+- **Échec vs faible/moyen** → perte = `pvPerdus * combat_pv_perte_echec_facteur` ; survie si PV>0 (quête reprend),
+  sinon effondrement + cooldown. `combatsPerdus++`.
+- **Échec vs fort** → **KO** : `pvActuels=0`, `enQuete=false`, `queteCooldownFin`, `combatsPerdus++`, compagnon perdu.
+```
+Trigger : Command Triggered → !combat
 ```
 
-- `buffActif` ajoute +2 au bonusAttaque ce tour
-- `degatsItemBonus = GetBonusItems(json, "attaqueBonus")` → s'ajoute aux dégâts (pas au toucher)
-- `caItemBonus = GetBonusItems(json, "caBonus")` → s'ajoute à la CA effective du joueur vs riposte
-- Victoire : `combatsGagnes += 1`, +XP +RAM depuis config_ennemis
-- Défaite : `combatsPerdus += 1`
+#### `!discuter` → `combat/commande_discuter.cs`
+Réussite = `discuter_base_pct + charismeEff * discuter_charisme_pct` (clamp), `charismeEff = charisme + items`.
+- **Sans compagnon** : réussite → **recrute** l'ennemi (`compagnonActif = ennemiNom`, booste `!combat`), quête reprend.
+  Échec → rencontre maintenue (→ `!combat`/`!fuir`).
+- **Avec compagnon** : réussite → passe la rencontre sans combattre. Échec → doit `!combat` (le compagnon booste).
+- `compagnonActif` est vidé à la **fin de quête** (succès/échec/abandon) et à la **défaite KO**.
 ```
-Trigger : Command Triggered → !attaque
+Trigger : Command Triggered → !discuter
 ```
 
-### `!soin` → `combat/combat_soin.cs`
-Soin pendant le combat — coûte 5 mana.
-- Si `manaActuels < 5` : soin échoue mais l'ennemi riposte quand même
-- `RollSoin` lit `_soinMax` et `_soinBonus` depuis config (sous-classe si elle en a, sinon classe)
-- Soin plafonné à `pvMax`
-- L'ennemi riposte toujours après
-
-```csharp
-private int RollSoin(string classe, string sousClasse, Random rng)
-{
-    string cfg    = File.ReadAllText(CONFIG_CLASSES);
-    string key    = (sousClasse != "" && LireValeur(cfg, sousClasse + "_soinMax") != "0") ? sousClasse : classe;
-    int soinMax   = int.Parse(LireValeur(cfg, key + "_soinMax"));
-    int soinBonus = int.Parse(LireValeur(cfg, key + "_soinBonus"));
-    if (soinMax == 0) soinMax = 4;
-    return rng.Next(1, soinMax + 1) + soinBonus;
-}
+#### `!fuir` → `combat/combat_fuir.cs`
+Réussite = `fuite_base_pct + agiliteEff * fuite_agilite_pct - poidsEquipe * fuite_poids_pct` (clamp).
+- `agiliteEff = agilite` (profil) ; repli sur `<classe>_agilite` (config_classes) si le champ est absent.
+- `poidsEquipe = GetBonusItems("poids")` (config_items ; armures lourdes > 0 → fuite plus dure).
+- **Réussite** → quitte la rencontre, quête reprend. **Échec** → rencontre maintenue, **pas de riposte** (→ `!combat`/`!discuter`).
 ```
+Trigger : Command Triggered → !fuir
+```
+
+#### `!soin` → `combat/combat_soin.cs` — **HORS combat**
+Soin hors rencontre uniquement (**bloqué si `enCombat == true`**). Coûte `combat_mana_cout_soin` mana, plafonné à
+`pvMax`, **sans riposte**. Utilisable **à terre** (PV=0). `RollSoin` lit `_soinMax`/`_soinBonus` (sous-classe sinon classe).
 ```
 Trigger : Command Triggered → !soin
 ```
 
-### `!defense` → `combat/combat_defense.cs`
-Posture défensive — pas d'attaque joueur ce tour.
-- CA temporaire = `classeArmure + caItemBonus + 3` pour ce tour uniquement
-- L'ennemi attaque contre cette CA augmentée
+#### `!acheter` → `Commandes/Acheter/commande_acheter.cs`
+Achète une **Potion** au marchand. Actif tant que `offreEnAttente == "marchand_soin"`. Vérifie
+`marchand_prix_potion` (config_allies) et `max_sac`. **Indépendant** de `!accepter` (soin) → deux choix séparés.
 ```
-Trigger : Command Triggered → !defense
+Trigger : Command Triggered → !acheter
 ```
 
-### `!fuir` → `combat/combat_fuir.cs`
-Tentative de fuite du combat.
-- Seuil : **Cryptolame** d20 ≥ 8 · **Autres** d20 ≥ 12
-- **Fuite réussie** : `enCombat = false` · si `enRencontre == true` → quête reprend
-- **Fuite échouée** : l'ennemi riposte · si `pvActuels <= 0` → `combatsPerdus += 1`
-```
-Trigger : Command Triggered → !fuir
-```
+> ⚠️ **Déprécié** : `combat_attaque.cs` (`!attaque`) et `combat_defense.cs` (`!defense`) ne contiennent plus qu'un
+> message de redirection vers `!combat`/`!discuter`/`!fuir`. Triggers à retirer quand plus personne ne les tape.
 
 ### `!inventaire` → `Commandes/Inventaire/commande_inventaire.cs`
 Affiche le sac et les slots équipés en 2 messages.
@@ -687,9 +720,20 @@ Trigger : Command Triggered → !classement
 ```
 
 ### `!accepter` / `!refuser` → `Commandes/Accepter|Refuser/`
-Répondent aux offres interactives en quête (Vieux Sage → XP, Marchand → soins).
-- Vérifient `offreEnAttente` et `offreExpire`
-- `!accepter` applique l'effet, `!refuser` annule silencieusement
+Répondent aux offres interactives en quête. Vérifient `offreEnAttente` et `offreExpire`.
+
+**Vieux Sage (`offreEnAttente == "vieux_sage"`) :**
+- `!accepter` → double roll indépendant : `vieux_sage_chance_xp`% → +XP (`offreValeur`) ;
+  `vieux_sage_chance_perte_item`% → perd 1 item aléatoire (les deux peuvent arriver ensemble).
+- `!refuser` → `vieux_sage_chance_combat`% → **pose une rencontre** contre le `Vieux-Sage`
+  (3 choix `!combat`/`!discuter`/`!fuir` + `rencontreExpire`) ; sinon il disparaît sans effet.
+
+**Marchand (`offreEnAttente == "marchand_soin"`) :**
+- `!accepter` → soigne les PV (`offreValeur`, plafonné à pvMax) · `!refuser` → annule · `!acheter` → Potion (**choix séparé**).
+- L'offre reste posée même si soin = 0 (PV pleins), pour autoriser `!acheter`.
+
+> Stats de combat du Vieux-Sage : `config_ennemis.json` (`Vieux-Sage_*`, palier `fort`).
+> % de l'offre : `config_allies.json` (`vieux_sage_*`).
 ```
 Trigger : Command Triggered → !accepter / !refuser
 ```
@@ -764,16 +808,19 @@ Clés format plat : `"NomItem_stat": valeur`
 **Items équipables** (`_slot: "arme"` | `"armure"` | `"accessoire"`) :
 ```
 _slot          ← détermine le champ joueur cible (armeEquipee / armureEquipee / accessoireEquipe)
-_attaqueBonus  ← bonus aux dégâts (pas au toucher !)
-_caBonus       ← bonus à la CA défensive du joueur
-_manaBonus     ← bonus mana (réservé futur)
-_charismeBonus ← bonus charisme (réservé futur)
+_rarete        ← rareté : "commun" | "rare" | "epique" | "legendaire"
+_attaqueBonus  ← bonus d'attaque (entre dans le calcul de !combat)
+_caBonus       ← bonus de CA (entre dans le calcul de !combat)
+_manaBonus     ← bonus mana
+_charismeBonus ← bonus charisme (entre dans le calcul de !discuter)
+_poids         ← poids (armures lourdes) → RÉDUIT la réussite de !fuir (défaut 0 si absent)
 _prixVente     ← RAM obtenus à la vente
 _description   ← texte affiché dans !inventaire
 ```
 
 **Consommables** (`_slot: "consommable"`) :
 ```
+_rarete
 _pvSoin    ← PV restaurés (direct, pas un dé)
 _manaSoin  ← Mana restauré
 _prixVente
@@ -781,28 +828,35 @@ _prixVente
 
 **Items de vente seule** (`_slot: "vente"`) :
 ```
+_rarete
 _prixVente
 ```
 
 ### Items disponibles
 
-| Nom | Slot | Bonus | Prix vente |
-|-----|------|-------|-----------|
-| Lame-de-Pointu | arme | +2 atq | 30 RAM |
-| Croc-de-Loup | arme | +1 atq | 20 RAM |
-| Sceptre-de-L'Antre | arme | +3 atq | 40 RAM |
-| Marteau-Carapace | arme | +2 atq | 35 RAM |
-| Luth-01 | arme | +1 atq | 20 RAM |
-| Arc-Fleau | arme | +2 atq | 30 RAM |
-| Armure-de-feuille | armure | +2 CA | 25 RAM |
-| Bouclier-binaire | armure | +1 CA | 15 RAM |
-| Bague-de-protection | accessoire | +1 CA | 15 RAM |
-| Gants-de-force | accessoire | +1 atq | 15 RAM |
-| Potion | consommable | +8 PV, +10 Mana | 3 RAM |
-| Morceau-Arbre-Serveur | vente | — | 50 RAM |
-| Ligne-Reseau | vente | — | 25 RAM |
-| Ecorce-R/A/C/I/N/E | vente | — | 5 RAM | Fragment lore (→ !racine) |
-| Ecaille-de-Pointu | accessoire | +3 atq, +2 CA | 999 RAM | Item secret unique |
+| Nom | Slot | Rareté | Bonus | Prix vente |
+|-----|------|--------|-------|-----------|
+| Lame-de-Pointu | arme | commun | +2 atq | 100 RAM |
+| Croc-de-Loup | arme | commun | +2 atq | 75 RAM |
+| Sceptre-de-L'Antre | arme | commun | +2 atq, +5 mana | 120 RAM |
+| Marteau-Carapace | arme | commun | +1 atq, +1 cha | 150 RAM |
+| Luth-01 | arme | commun | +1 cha | 200 RAM |
+| Arc-Fleau | arme | commun | +3 atq | 180 RAM |
+| Armure-d'ecorce | armure | commun | +2 CA, +2 cha | 150 RAM |
+| Armure-de-feuille | armure | commun | +1 CA, +1 cha | 120 RAM |
+| Robe-de-code | armure | commun | +1 CA, +5 mana | 130 RAM |
+| Apparat-Système | armure | commun | +2 CA, +1 cha | 160 RAM |
+| Armure-renforcée | armure | commun | +3 CA | 200 RAM |
+| Bague-de-protection | accessoire | commun | +1 CA | 80 RAM |
+| Cape-de-furtivité | accessoire | commun | +2 cha | 90 RAM |
+| Amulette-de-mana | accessoire | commun | +5 mana | 100 RAM |
+| Gants-de-force | accessoire | commun | +2 atq | 110 RAM |
+| Chapeau-de-charisme | accessoire | commun | +3 cha | 120 RAM |
+| Potion | consommable | commun | +8 PV, +10 Mana | 3 RAM |
+| Morceau-Arbre-Serveur | vente | commun | — | 50 RAM |
+| Ligne-Reseau | vente | commun | — | 25 RAM |
+| Ecorce-R/A/C/I/N/E | vente | commun | — | 5 RAM |
+| Ecaille-de-Pointu | accessoire | **legendaire** | +3 atq, +2 CA, +5 mana, +2 cha | 999 RAM |
 
 ### Inventaire joueur
 - Champ `inventaire` : CSV entre guillemets (`"item1,item2,item3"`)

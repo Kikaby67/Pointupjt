@@ -24,6 +24,8 @@ public class CPHInline
         int chanceLootArtefact   = int.Parse(LireValeur(cfgG, "quete_chance_loot_artefact"));
         int chanceEcorce         = int.Parse(LireValeur(cfgG, "quete_chance_ecorce"));
         int cooldownDefaite      = int.Parse(LireValeur(cfgG, "quete_cooldown_defaite_secondes"));
+        int expireSecs           = int.Parse(LireValeur(cfgG, "rencontre_expire_secondes"));
+        int intervalleRenc       = int.Parse(LireValeur(cfgG, "quete_rencontre_intervalle_secondes"));
 
         foreach (string chemin in fichiers)
         {
@@ -31,41 +33,31 @@ public class CPHInline
             if (LireValeur(json, "enQuete") != "true") continue;
 
             string nomJoueur = LireValeur(json, "nomJoueur");
+            json = EnsureChamp(json, "rencontreExpire", "0", false);
+            json = EnsureChamp(json, "compagnonActif", "", true);
 
-            // === CAS 1 : rencontre combat en cours ===
+            // === CAS 1 : rencontre en attente (résolue par !combat/!discuter/!fuir) ===
             if (LireValeur(json, "enRencontre") == "true")
             {
-                if (LireValeur(json, "enCombat") == "true") continue; // combat toujours actif
-
-                int pvActuels = int.Parse(LireValeur(json, "pvActuels"));
-                long pauseDebut = long.Parse(LireValeur(json, "quetePauseDebut"));
-                long totalPause = long.Parse(LireValeur(json, "queteTotalPause"));
-
-                if (pvActuels > 0)
+                long expire = long.Parse(LireValeur(json, "rencontreExpire"));
+                if (expire > 0 && maintenant > expire)
                 {
-                    // Victoire : reprendre la quête, comptabiliser la pause
-                    long dureePause = maintenant - pauseDebut;
+                    // Le joueur a ignoré la rencontre → fuite automatique, la quête reprend
+                    string ennemiIgnore = LireValeur(json, "ennemiNom");
+                    long pauseDebut = long.Parse(LireValeur(json, "quetePauseDebut"));
+                    long totalPause = long.Parse(LireValeur(json, "queteTotalPause"));
+                    if (pauseDebut > 0) totalPause += maintenant - pauseDebut;
+
+                    json = ModifierValeur(json, "enCombat", "false", false);
                     json = ModifierValeur(json, "enRencontre", "false", false);
                     json = ModifierValeur(json, "rencontreType", "", true);
+                    json = ModifierValeur(json, "rencontreExpire", "0", false);
                     json = ModifierValeur(json, "quetePauseDebut", "0", false);
-                    json = ModifierValeur(json, "queteTotalPause", (totalPause + dureePause).ToString(), false);
+                    json = ModifierValeur(json, "queteTotalPause", totalPause.ToString(), false);
                     File.WriteAllText(chemin, json);
-                    CPH.SendMessage(nomJoueur + ", tu as vaincu l'ennemi ! Ta quête reprend là où elle s'est arrêtée !");
+                    CPH.SendMessage(nomJoueur + ", " + ennemiIgnore + " se lasse de t'attendre et s'éloigne. Ta quête reprend.");
                 }
-                else
-                {
-                    // Défaite : quête annulée, 10 min de cooldown
-                    long cooldownFin = maintenant + cooldownDefaite;
-                    json = ModifierValeur(json, "enQuete", "false", false);
-                    json = ModifierValeur(json, "enRencontre", "false", false);
-                    json = ModifierValeur(json, "rencontreType", "", true);
-                    json = ModifierValeur(json, "queteTicksRestants", "0", false);
-                    json = ModifierValeur(json, "quetePauseDebut", "0", false);
-                    json = ModifierValeur(json, "queteCooldownFin", cooldownFin.ToString(), false);
-                    File.WriteAllText(chemin, json);
-                    CPH.SendMessage(nomJoueur + ", tu t'es effondré face à l'ennemi... Quête abandonnée. Tu te réfugies dans l'Antre de Pointu — 10 minutes de récupération avant de repartir !");
-                }
-                continue;
+                continue; // sinon : on attend le choix du joueur (!combat/!discuter/!fuir)
             }
 
             // === CHECK OFFRE EXPIRÉE ===
@@ -87,7 +79,7 @@ public class CPHInline
             bool encounterLancee = false;
             long dernierCheck = long.Parse(LireValeur(json, "dernierCheckRencontre"));
 
-            if (maintenant - dernierCheck >= 180 && offreEnCours == "")
+            if (maintenant - dernierCheck >= intervalleRenc && offreEnCours == "")
             {
                 json = ModifierValeur(json, "dernierCheckRencontre", maintenant.ToString(), false);
 
@@ -97,24 +89,18 @@ public class CPHInline
 
                     if (typeRoll == 0)
                     {
-                        // Rencontre combat : pause quête + déclencher combat
-                        string[] ennemis = { "Martre-Trojan", "Sentinelle du Castor", "Ombre de la mémoire", "Drone-racine", "Parasite de données", "Sanglier-Crash", "Taupe-Malware" };
-                        int idx = rng.Next(ennemis.Length);
-                        string cfgE  = File.ReadAllText(CONFIG_ENNEMIS);
-                        int pvEnnemi = int.Parse(LireValeur(cfgE, ennemis[idx] + "_pv"));
-                        if (pvEnnemi == 0) pvEnnemi = 20;
+                        // Rencontre : pause quête + propose les 3 choix (résolus par commande)
+                        string[] ennemis = LireValeurString(cfgG, "rencontre_ennemis").Split(',');
+                        string ennemiChoisi = ennemis[rng.Next(ennemis.Length)].Trim();
 
                         json = ModifierValeur(json, "enRencontre", "true", false);
                         json = ModifierValeur(json, "rencontreType", "combat", true);
                         json = ModifierValeur(json, "quetePauseDebut", maintenant.ToString(), false);
                         json = ModifierValeur(json, "enCombat", "true", false);
-                        json = ModifierValeur(json, "ennemiNom", ennemis[idx], true);
-                        json = ModifierValeur(json, "ennemiPVActuels", pvEnnemi.ToString(), false);
-                        json = ModifierValeur(json, "tourCombat", "1", false);
-                        json = ModifierValeur(json, "buffActif", "false", false);
-                        json = ModifierValeur(json, "protectionActive", "false", false);
+                        json = ModifierValeur(json, "ennemiNom", ennemiChoisi, true);
+                        json = ModifierValeur(json, "rencontreExpire", (maintenant + expireSecs).ToString(), false);
                         File.WriteAllText(chemin, json);
-                        CPH.SendMessage(nomJoueur + ", un " + ennemis[idx] + " surgit sur ta route ! (" + pvEnnemi + " PV) Quête mise en pause — bats-toi !");
+                        CPH.SendMessage(nomJoueur + ", un " + ennemiChoisi + " surgit sur ta route ! Quête en pause. Tape !combat pour te battre, !fuir pour lui échapper ou !discuter afin de tenter ta chance. (" + (expireSecs / 60) + " min)");
                         encounterLancee = true;
                     }
                     else if (typeRoll == 1)
@@ -218,38 +204,24 @@ public class CPHInline
                     }
                     else
                     {
-                        // Marchand : soin interactif, vente de potion automatique
+                        // Marchand : soin (!accepter) ET potion à l'achat (!acheter) — deux choix séparés, rien de forcé
                         int pvActuelsMarchand = int.Parse(LireValeur(json, "pvActuels"));
                         int pvMaxMarchand     = int.Parse(LireValeur(json, "pvMax"));
                         int soinMin  = int.Parse(LireValeur(cfgAllies, "marchand_pv_min"));
                         int soinMaxV = int.Parse(LireValeur(cfgAllies, "marchand_pv_max"));
                         int soin = Math.Min(rng.Next(soinMin, soinMaxV + 1), pvMaxMarchand - pvActuelsMarchand);
                         long expMarchand = long.Parse(LireValeur(cfgAllies, "marchand_expiration"));
-                        string msgMarchand;
-
-                        if (soin > 0)
-                        {
-                            json = ModifierValeur(json, "offreEnAttente", "marchand_soin", true);
-                            json = ModifierValeur(json, "offreValeur",    soin.ToString(), false);
-                            json = ModifierValeur(json, "offreExpire",    (maintenant + expMarchand).ToString(), false);
-                            msgMarchand = nomJoueur + ", un marchand ambulant t'aborde ! Il propose de te soigner (" + soin + " PV). Tape !accepter ou !refuser (2 min) !";
-                        }
-                        else
-                        {
-                            msgMarchand = nomJoueur + ", tu croises un marchand ambulant, mais tu n'as pas besoin de soins !";
-                        }
-
-                        string invMarchand = LireValeurString(json, "inventaire");
-                        int nbItemsMarchand = invMarchand == "" ? 0 : invMarchand.Split(',').Length;
-                        int ramMarchand  = int.Parse(LireValeur(json, "ram"));
                         int prixPotion   = int.Parse(LireValeur(cfgAllies, "marchand_prix_potion"));
-                        if (nbItemsMarchand < maxSac && ramMarchand >= prixPotion)
-                        {
-                            json = AjouterValeur(json, "ram", -prixPotion);
-                            string nouvInvMarchand = invMarchand == "" ? "Potion" : invMarchand + ",Potion";
-                            json = ModifierValeurString(json, "inventaire", nouvInvMarchand);
-                            msgMarchand += " Il te vend aussi une Potion pour " + prixPotion + " RAM !";
-                        }
+
+                        // L'offre reste active (acceptée/refusée/expirée) : autorise !accepter (soin) ET !acheter (potion)
+                        json = ModifierValeur(json, "offreEnAttente", "marchand_soin", true);
+                        json = ModifierValeur(json, "offreValeur",    soin.ToString(), false);
+                        json = ModifierValeur(json, "offreExpire",    (maintenant + expMarchand).ToString(), false);
+
+                        string msgMarchand = nomJoueur + ", un marchand ambulant t'aborde ! ";
+                        if (soin > 0) msgMarchand += "Soin : !accepter (+" + soin + " PV) ou !refuser. ";
+                        else          msgMarchand += "(tu as déjà tous tes PV) ";
+                        msgMarchand += "Potion : !acheter (" + prixPotion + " RAM). (" + (expMarchand / 60) + " min)";
 
                         File.WriteAllText(chemin, json);
                         CPH.SendMessage(msgMarchand);
@@ -282,6 +254,7 @@ public class CPHInline
 
             json = ModifierValeur(json, "enQuete", "false", false);
             json = ModifierValeur(json, "queteTicksRestants", "0", false);
+            json = ModifierValeur(json, "compagnonActif", "", true);  // le compagnon ne suit que sur une quête
 
             if (succes)
             {
@@ -437,6 +410,15 @@ public class CPHInline
         if (i < 10)  return "quete00" + i;
         if (i < 100) return "quete0"  + i;
         return "quete" + i;
+    }
+
+    // Insère un champ s'il est absent du JSON (migration des anciens profils)
+    private string EnsureChamp(string json, string cle, string valeurDefaut, bool estTexte)
+    {
+        if (json.Contains("\"" + cle + "\"")) return json;
+        int    pos = json.LastIndexOf('}');
+        string val = estTexte ? "\"" + valeurDefaut + "\"" : valeurDefaut;
+        return json.Substring(0, pos) + ",\n  \"" + cle + "\": " + val + "\n}";
     }
 
     private string LireValeur(string json, string cle)

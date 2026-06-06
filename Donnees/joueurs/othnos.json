@@ -2,7 +2,7 @@
   "nomJoueur": "othnos",
   "ram": 43,
   "niveau": 3,
-  "experience": 957,
+  "experience": 1302,
   "classeChoisie": true,
   "classe": "Hackmancien",
   "sousClasseChoisie": false,
@@ -46,5 +46,8 @@
     "combatsGagnes": 0,
     "combatsPerdus": 0,
     "quetesTerminees": 0
-  }
+  },
+  "agilite": 10,
+  "compagnonActif": "",
+  "rencontreExpire": 0
 }

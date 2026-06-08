@@ -4,7 +4,9 @@ Module autonome : ne dépend que de Pillow (pas de discord), donc testable seul.
 """
 import os
 import io
+import gc
 import datetime
+from functools import lru_cache
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
@@ -43,8 +45,10 @@ def trouver_banner(jeu: str):
     return None
 
 
+@lru_cache(maxsize=64)
 def _font(taille: int, gras: bool = False):
-    """Police perso (fonts/bold.ttf|regular.ttf) si présente, sinon défaut scalable."""
+    """Police perso (fonts/bold.ttf|regular.ttf) si présente, sinon défaut scalable.
+    Mise en cache : évite de re-parser le fichier TTF (~750 Ko) à chaque appel."""
     noms = (["bold.ttf", "regular.ttf"] if gras else ["regular.ttf", "bold.ttf"])
     for nom in noms:
         chemin = os.path.join(FONTS_DIR, nom)
@@ -198,5 +202,7 @@ def generer_image_calendrier(data: dict, lundi) -> io.BytesIO:
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
+    img.close()
+    gc.collect()
     buf.seek(0)
     return buf

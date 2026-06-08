@@ -2,7 +2,7 @@
   "nomJoueur": "Payne_Nova",
   "ram": 49,
   "niveau": 2,
-  "experience": 695,
+  "experience": 815,
   "classeChoisie": true,
   "classe": "Hackmancien",
   "sousClasseChoisie": false,
@@ -39,7 +39,7 @@
     "tourCombat": 5
   },
   "inventaire": "Potion,Morceau-Arbre-Serveur,Potion,Potion,Potion,Ligne-Reseau,Potion,Potion",
-  "armeEquipee": "",
+  "armeEquipee": "Bâton-Magique",
   "armureEquipee": "Armure-de-feuille",
   "accessoireEquipe": "",
   "statistiques": {

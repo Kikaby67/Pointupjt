@@ -76,6 +76,7 @@ public class CPHInline
         json = ModifierValeur(json, "classeChoisie", "true",                  false);
         json = ModifierValeur(json, "classe",         classeNom,              true);
         json = ModifierValeur(json, "typeArme",       typeArme,               true);
+        json = ModifierValeur(json, "armeEquipee",    typeArme,               true);  // arme de classe équipée d'office
         json = ModifierValeur(json, "pvMax",          pvFinal.ToString(),     false);
         json = ModifierValeur(json, "pvActuels",      pvFinal.ToString(),     false);
         json = ModifierValeur(json, "classeArmure",   caFinale.ToString(),    false);

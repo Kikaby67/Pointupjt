@@ -12,7 +12,7 @@ Chaque joueur a un fichier JSON sur le disque local. Pas de base de données.
 
 **Machine** : Windows 11, AMD Ryzen 5 5600X, 32 Go RAM
 **Stack** : Streamer.bot (C# inline), JSON fichiers plats, .NET 10.0 (prototypage)
-**Repo GitHub** : https://github.com/Kikaby67/Pointupjt (public)
+**Repo GitHub** : https://github.com/Kikaby67/pjt (public) — ⚠️ l'ancien repo `Pointupjt` est abandonné
 
 ---
 
@@ -41,14 +41,19 @@ Pointu-PJT/
 │   │   └── Secret/              # !racine (commande secrète)
 │   ├── quetes/
 │   │   ├── quest_system.cs      # !quete (lancer / consulter)
-│   │   └── quest_timer.cs       # Timer QuestCheck (30s, auto-résolution + rencontres)
+│   │   └── quest_timer.cs       # Timer QuestCheck (30s, auto-résolution + rencontres + mini-boss)
 │   ├── combat/
-│   │   ├── commande_combat.cs   # !combat (rencontre)
+│   │   ├── commande_combat.cs   # !combat (rencontre + mini-boss)
 │   │   ├── commande_discuter.cs # !discuter (rencontre)
 │   │   ├── combat_fuir.cs       # !fuir (rencontre)
 │   │   ├── combat_soin.cs       # !soin (HORS combat)
 │   │   ├── combat_attaque.cs    # !attaque (DÉPRÉCIÉ → redirige)
 │   │   └── combat_defense.cs    # !defense (DÉPRÉCIÉ → redirige)
+│   ├── Boss/                     # Boss communautaire (tour par tour, étape etat_global)
+│   │   ├── spawn_boss.cs        # !spawnboss (streamer) → recrutement
+│   │   ├── commande_arene.cs    # !arene → rejoindre le recrutement
+│   │   ├── commande_attaquer.cs # !attaquer → frapper à son tour
+│   │   └── arena_check.cs       # Timer ArenaCheck (transition/riposte/AFK)
 │   ├── Timer_Xp/
 │   │   └── Timer_XP_visionnage.cs
 │   └── Reward/
@@ -64,7 +69,7 @@ Pointu-PJT/
 │   ├── config_level.json        # ★ Source unique : seuils XP et bonus de niveau
 │   ├── config_allies.json       # ★ Source unique : paramètres alliés/marchands
 │   ├── secret_recu.txt          # Liste des joueurs ayant reçu l'Ecaille-de-Pointu
-│   └── etat_global.json         # Rencontre manuelle active (streamer)
+│   └── etat_global.json         # État partagé du boss communautaire (arène)
 ├── Lore/
 │   ├── LA_LEGENDE_DE_POINTU_V2.md
 │   ├── FICHES_CLASSES.md
@@ -166,9 +171,28 @@ timer_xp_gain / timer_regen_pv / timer_regen_mana ← timer 15 min (5 / 2 / 3)
 rencontre_ennemis              ← CSV des ennemis de rencontre de quête
 rencontre_expire_secondes      ← délai avant fuite auto d'une rencontre (120)
 
+— mini-boss (solo, en quête) —
+rencontre_mini_boss            ← CSV des mini-boss (Insecte-Bug,Corbeau-Daemon,Castor-Rootkit,Loup-Firewall)
+mini_boss_niveau_min (5)       ← niveau requis pour qu'un mini-boss puisse apparaître
+mini_boss_chance (25)          ← % qu'une rencontre de combat devienne un mini-boss
+combat_tier_miniboss_mod (-35) ← modificateur de difficulté (plus dur que fort)
+mini_boss_loot_pool (loot_rare)← pool de loot garanti à la victoire
+
+— boss communautaire (arène, tour par tour) —
+rencontre_boss                 ← CSV des boss (Reine-Bug,Munin-Daemon,Hector-Pierre Castor,Fenrir-Firewall)
+arene_recrutement_secondes (300) ← durée de la phase !arene (5 min)
+arene_tour_timeout_secondes (120) ← délai avant saut de tour AFK (2 min)
+boss_pv_par_participant (40)   ← PV ajoutés au boss par combattant
+boss_degats_base/alea (5/6)    ← dégâts d'un joueur sur le boss (+ (atk+niveau)*nbAttaques)
+boss_recompense_base_xp/ram (50/20) ← récompense à TOUS les participants
+boss_top_bonus_xp/ram (100/50) ← bonus au meilleur dégâteur
+boss_loot_pool (loot_legendaire) ← loot du meilleur dégâteur
+
 — !combat —
 combat_base_pct (50) · combat_plancher_joueur (20) · combat_plafond_joueur (80) · combat_min/max (20/100)
 combat_pv_ref/tranche/pct (16/5/3) · combat_ca_ref/tranche/pct (12/2/3) · combat_atk_ref/tranche/pct (2/2/3)
+combat_mana_ref/tranche/pct (5/10/2) · combat_cha_ref/tranche/pct (8/4/1) · combat_agi_ref/tranche/pct (8/3/1)
+combat_niveau_ref/tranche/pct (1/2/2) · combat_attaques_pct (6)   ← bonus par attaque au-delà de 1 (sous-classes)
 combat_tier_faible_mod (100) · combat_tier_moyen_mod (0) · combat_tier_fort_mod (-20)
 combat_pv_perte_diviseur (4) · combat_pv_perte_echec_facteur (3) · combat_pv_perte_alea (2)
 compagnon_combat_bonus (15)    ← bonus % du compagnon recruté
@@ -251,8 +275,11 @@ string key = sousClasse != "" && LireValeur(cfg, sousClasse + "_degatsMax") != "
 Clés format plat : `"NomEnnemi_stat": valeur`
 ```
 _xp, _ram        ← récompenses (gagnées sur une victoire !combat)
-_tier            ← "faible" | "moyen" | "fort" → modifie la chance de combat (100 / 80 / 60 % de réf.)
-_pv, _ca, _degatsMax   ← OBSOLÈTES (ancien combat tour par tour ; gardés pour compat)
+_tier            ← "faible" | "moyen" | "fort" | "miniboss" | "boss"
+                   chance de !combat : faible +100 / moyen 0 / fort -20 / miniboss -35 ; "boss" = arène (pas !combat)
+_pv              ← OBSOLÈTE pour les rencontres classiques, mais SERT de PV de base aux boss d'arène
+_degatsMax       ← OBSOLÈTE pour !combat, mais SERT à la riposte du boss d'arène (× nb joueurs)
+_ca              ← OBSOLÈTE (gardé pour compat)
 ```
 
 ---
@@ -322,17 +349,25 @@ Fichier : `Donnees/joueurs/{nomJoueur.ToLower()}.json`
 
 ---
 
-## `etat_global.json`
+## `etat_global.json` — État partagé du boss communautaire (arène)
 
 ```json
 {
-  "rencontreActive": false,
-  "ennemiNom": "",
-  "ennemiPVBase": 0
+  "bossActif": false,
+  "bossPhase": "",          // "" | "recrutement" | "combat"
+  "bossNom": "",
+  "bossPVMax": 0,
+  "bossPVActuels": 0,
+  "areneFin": 0,            // timestamp fin du recrutement
+  "ordre": "",              // CSV des pseudos dans l'ordre d'initiative
+  "tourIndex": 0,           // index du joueur dont c'est le tour (>= nb = riposte boss)
+  "tourDeadline": 0,        // timestamp du saut de tour AFK
+  "participants": ""        // CSV "pseudo:degatsCumulés" (pour le top dégâts)
 }
 ```
 
-Utilisé uniquement pour les rencontres manuelles lancées par le streamer.
+Lu/écrit par les 4 fichiers `Streamerbot/Boss/`. Un seul boss à la fois.
+> ⚠️ N'est plus la « rencontre manuelle streamer » d'avant (cette feature n'avait jamais été codée).
 
 ---
 
@@ -425,14 +460,14 @@ private string AppliquerBonusNiveau(string json, int niveau)
 
 ## Ennemis
 
-Stats ennemis dans `config_ennemis.json`. Avec le nouveau combat, seuls **`_tier`** (chance de `!combat`) et
-**`_xp`/`_ram`** (récompenses) sont lus. `_pv`/`_ca`/`_degatsMax` sont conservés mais **obsolètes**.
+Stats ennemis dans `config_ennemis.json`. Pour `!combat` : **`_tier`** (chance) + **`_xp`/`_ram`** (récompenses).
+Pour les **boss d'arène** : **`_pv`** (PV de base) + **`_degatsMax`** (riposte). `_ca` reste obsolète.
 
 ```csharp
 private string GetEnnemiTier(string nom)   // commande_combat.cs
 {
     string t = LireValeurString(File.ReadAllText(CONFIG_ENNEMIS), nom + "_tier");
-    return t == "" ? "moyen" : t;          // faible / moyen / fort
+    return t == "" ? "moyen" : t;          // faible / moyen / fort / miniboss / boss
 }
 
 private int[] GetRecompensesEnnemi(string nom)   // XP/RAM sur victoire !combat
@@ -445,8 +480,10 @@ private int[] GetRecompensesEnnemi(string nom)   // XP/RAM sur victoire !combat
 ```
 
 > Liste des ennemis de rencontre = clé `rencontre_ennemis` (CSV) dans `config_global.json`.
-> Paliers actuels : Drone-racine/Insecte-Bug = faible · Martre/Taupe/Parasite/Ombre/Sentinelle/Corbeau = moyen ·
-> Sanglier-Crash/Castor-Rootkit/Loup-Firewall/Vieux-Sage = fort.
+> Paliers rencontre : Drone-racine = faible · Martre/Taupe/Parasite/Ombre/Sentinelle = moyen · Sanglier-Crash = fort.
+> Mini-boss (`rencontre_mini_boss`, tier `miniboss`) : Insecte-Bug, Corbeau-Daemon, Castor-Rootkit, Loup-Firewall.
+> Boss d'arène (`rencontre_boss`, tier `boss`) : Reine-Bug, Munin-Daemon, Hector-Pierre Castor, Fenrir-Firewall.
+> Vieux-Sage (`fort`) reste réservé à son événement (offre du Vieux Sage).
 
 ### Ennemis de rencontre de quête
 
@@ -460,14 +497,25 @@ private int[] GetRecompensesEnnemi(string nom)   // XP/RAM sur victoire !combat
 | Sanglier-Crash | 35 | 9 | 1d8 | 22 | 5 |
 | Taupe-Malware | 22 | 13 | 1d6 | 20 | 4 |
 
-### Ennemis manuels (streamer)
+### Mini-boss (solo, en quête — tier `miniboss`)
 
-| Nom | CA | Dégâts | XP | RAM |
-|-----|-----|--------|-----|-----|
-| Insecte-Bug | 8 | 1d4 | 10 | 2 |
-| Corbeau-Daemon | 14 | 1d6 | 25 | 5 |
-| Castor-Rootkit | 16 | 1d6 | 40 | 8 |
-| Loup-Firewall | 15 | 1d8 | 60 | 12 |
+| Nom | XP | RAM |
+|-----|-----|-----|
+| Insecte-Bug | 10 | 2 |
+| Corbeau-Daemon | 25 | 5 |
+| Castor-Rootkit | 40 | 8 |
+| Loup-Firewall | 60 | 12 |
+
+### Boss d'arène (communautaire — tier `boss`)
+
+| Nom | PV base | degatsMax | XP | RAM |
+|-----|---------|-----------|-----|-----|
+| Reine-Bug | 300 | 8 | 80 | 30 |
+| Munin-Daemon | 400 | 10 | 100 | 40 |
+| Hector-Pierre Castor | 600 | 12 | 150 | 60 |
+| Fenrir-Firewall | 500 | 10 | 120 | 50 |
+
+> PV réels du boss = `_pv` + `boss_pv_par_participant` × nb joueurs. Riposte = `_degatsMax` × nb joueurs.
 
 ---
 
@@ -567,7 +615,8 @@ Parcourt tous les fichiers joueurs. Pour chaque joueur `enQuete == true` (ajoute
 
 **CAS 2** — Check rencontre tous les `quete_rencontre_intervalle_secondes` (180 s) :
 - `quete_chance_rencontre`% de chance, parmi 3 types : **Combat** / **Événement** / **Marchand**.
-- **Combat** : pose une rencontre en attente (ennemi tiré de `rencontre_ennemis`, CSV config_global) + message 3 choix + `rencontreExpire`.
+- **Combat** : pose une rencontre en attente (ennemi tiré de `rencontre_ennemis`) + message 3 choix + `rencontreExpire`.
+  Si `niveau >= mini_boss_niveau_min` et jet `< mini_boss_chance` → ennemi tiré de `rencontre_mini_boss` (⚠️ MINI-BOSS).
 - **Marchand** : pose l'offre `marchand_soin` (soin via `!accepter`) **et** annonce la Potion (`!acheter`). **Plus de vente forcée**.
 - **Événement** : pool de 8 événements (bonus/malus instantanés, dont l'offre du Vieux Sage) — inchangé.
 
@@ -590,26 +639,31 @@ Trigger : Timed Action → QuestCheck (30s, repeat)
 Résolution probabiliste en un jet. Chance de réussite :
 ```
 score = combat_base_pct
-      + ((pvMax  - combat_pv_ref ) / combat_pv_tranche ) * combat_pv_pct
-      + ((CAeff  - combat_ca_ref ) / combat_ca_tranche ) * combat_ca_pct
-      + ((ATQeff - combat_atk_ref) / combat_atk_tranche) * combat_atk_pct
-CAeff  = classeArmure + GetBonusItems("caBonus")
-ATQeff = bonusAttaque  + GetBonusItems("attaqueBonus")
+      + Tranche(pvMax,   "pv")    + Tranche(CAeff,   "ca")   + Tranche(ATQeff, "atk")
+      + Tranche(manaEff, "mana")  + Tranche(chaEff,  "cha")  + Tranche(agilite, "agi")
+      + Tranche(niveau,  "niveau")
+      + (nbAttaques - 1) * combat_attaques_pct        // réintègre les sous-classes (multi-attaque)
+Tranche(v, p) = ((v - combat_<p>_ref) / combat_<p>_tranche) * combat_<p>_pct
+CAeff   = classeArmure + GetBonusItems("caBonus")     ATQeff = bonusAttaque + GetBonusItems("attaqueBonus")
+manaEff = manaMax + GetBonusItems("manaBonus")        chaEff = charisme + GetBonusItems("charismeBonus")
+agilite, niveau = champs du profil
+nbAttaques : lu sur la sous-classe (prioritaire), sinon classe, défaut 1 (config_classes)
 score  = clamp(score, combat_plancher_joueur, combat_plafond_joueur)   // ex. 20..80
 si compagnonActif != "" : score += compagnon_combat_bonus
 final  = clamp(score + tierMod, combat_min, combat_max)                // 20..100
-tierMod (config) : faible = +100 (→100%), moyen = 0, fort = -20
+tierMod (config) : faible = +100 (→100%), moyen = 0, fort = -20, miniboss = -35
 ```
-Le **palier** vient de `config_ennemis.json` (`<Ennemi>_tier` : `faible`/`moyen`/`fort`).
-Calibrage de référence (kikabygaming) : moyen 80 % · fort 60 % · faible 100 %.
+Le **palier** vient de `config_ennemis.json` (`<Ennemi>_tier` : `faible`/`moyen`/`fort`/`miniboss`).
+Calibrage de référence (kikabygaming) : moyen 80 % · fort 60 % · faible 100 % · miniboss ~45 %.
 
 **Résolution** (`rng.Next(100) < final`) :
 - **Réussite** → `pvPerdus = ceil((100-final)/combat_pv_perte_diviseur) + rng(0..combat_pv_perte_alea)`,
   +XP/+RAM de l'ennemi (`GetRecompensesEnnemi`), `combatsGagnes++`, quête reprend.
   Si PV → 0 : effondré (quête terminée, **sans** cooldown — il faut juste se soigner).
+  **Mini-boss** : loot garanti d'un item de `mini_boss_loot_pool` (config_global → pool de config_quetes) si sac < `max_sac`.
 - **Échec vs faible/moyen** → perte = `pvPerdus * combat_pv_perte_echec_facteur` ; survie si PV>0 (quête reprend),
   sinon effondrement + cooldown. `combatsPerdus++`.
-- **Échec vs fort** → **KO** : `pvActuels=0`, `enQuete=false`, `queteCooldownFin`, `combatsPerdus++`, compagnon perdu.
+- **Échec vs fort/miniboss** → **KO** : `pvActuels=0`, `enQuete=false`, `queteCooldownFin`, `combatsPerdus++`, compagnon perdu.
 ```
 Trigger : Command Triggered → !combat
 ```
@@ -761,10 +815,26 @@ Régénération passive si `enCombat != true` : +2 PV (plafonné pvMax) + +3 Man
 Trigger : Timed Action → Timer_XP_Visionnage (900s, repeat)
 ```
 
-### `Action_Rencontre.cs` — Rencontre manuelle streamer
-4 actions séparées (une par ennemi). Met à jour `etat_global.json` + chat.
+### Boss communautaire (arène) — `Streamerbot/Boss/`
+
+Combat **tour par tour** partagé, indépendant des quêtes. État dans `etat_global.json` (un seul boss à la fois).
+
+**Déroulé :**
+1. `!spawnboss [nom]` (broadcaster) → phase **recrutement** (`arene_recrutement_secondes`, 5 min), active le timer `ArenaCheck`.
+2. `!arene` → un joueur rejoint (vivant + classe choisie) pendant le recrutement.
+3. Fin du recrutement (`arena_check.cs`) → **ordre d'initiative** = agilité décroissante, égalité = ordre d'arrivée (tri stable) ;
+   PV boss = `<boss>_pv` + `boss_pv_par_participant` × nb joueurs.
+4. `!attaquer` → chacun frappe à son tour (refus si pas son tour). AFK > `arene_tour_timeout_secondes` (2 min) → saut auto.
+   Dégâts joueur = `boss_degats_base` + (atk+niveau)×nbAttaques + alea.
+5. Après le dernier joueur → **riposte boss** (`arena_check.cs`) : total = `<boss>_degatsMax` × nb joueurs,
+   réparti **inversement à la CA effective** (CA haute = encaisse moins). PV à 0 = tombé, retiré de l'ordre.
+6. Boucle jusqu'à boss mort ou groupe anéanti.
+   - **Victoire** (`commande_attaquer.cs`) : XP/RAM de base à TOUS les participants ; bonus + loot `boss_loot_pool` au **meilleur dégâteur**.
+   - **Défaite** : tous à terre, aucune récompense.
+
 ```
-Trigger : Manuel (bouton Streamer.bot)
+Triggers : Command → !spawnboss (broadcaster) · !arene · !attaquer
+           Timed Action → ArenaCheck (~10-15s, repeat ; démarre désactivé, activé/désactivé par le code)
 ```
 
 ---

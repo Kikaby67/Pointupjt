@@ -8,6 +8,8 @@ public class CPHInline
     private const string CONFIG_ITEMS    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_items.json";
     private const string CONFIG_LEVEL    = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_level.json";
     private const string CONFIG_GLOBAL   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_global.json";
+    private const string CONFIG_CLASSES  = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_classes.json";
+    private const string CONFIG_QUETES   = @"C:\Users\Florian\pjt\Pointu-PJT\Donnees\config_quetes.json";
 
     public bool Execute()
     {
@@ -35,15 +37,32 @@ public class CPHInline
 
         string cfgG = File.ReadAllText(CONFIG_GLOBAL);
 
-        // === CALCUL DE LA CHANCE DE RÉUSSITE ===
-        int pvMax  = int.Parse(LireValeur(json, "pvMax"));
-        int caEff  = int.Parse(LireValeur(json, "classeArmure")) + GetBonusItems(json, "caBonus");
-        int atkEff = int.Parse(LireValeur(json, "bonusAttaque"))  + GetBonusItems(json, "attaqueBonus");
+        // === CALCUL DE LA CHANCE DE RÉUSSITE (toutes les stats + niveau + attaques) ===
+        int pvMax   = int.Parse(LireValeur(json, "pvMax"));
+        int caEff   = int.Parse(LireValeur(json, "classeArmure")) + GetBonusItems(json, "caBonus");
+        int atkEff  = int.Parse(LireValeur(json, "bonusAttaque"))  + GetBonusItems(json, "attaqueBonus");
+        int manaEff = int.Parse(LireValeur(json, "manaMax"))   + GetBonusItems(json, "manaBonus");
+        int chaEff  = int.Parse(LireValeur(json, "charisme"))  + GetBonusItems(json, "charismeBonus");
+        int agi     = int.Parse(LireValeur(json, "agilite"));
+        int niveau  = int.Parse(LireValeur(json, "niveau"));
+
+        // Nombre d'attaques (sous-classe prioritaire, puis classe, défaut 1) → réintègre les sous-classes
+        string classe     = LireValeur(json, "classe");
+        string sousClasse = LireValeur(json, "sousClasse");
+        string cfgCls = File.ReadAllText(CONFIG_CLASSES);
+        int nbAtq = (sousClasse != "" && sousClasse != "0") ? int.Parse(LireValeur(cfgCls, sousClasse + "_nbAttaques")) : 0;
+        if (nbAtq == 0) nbAtq = int.Parse(LireValeur(cfgCls, classe + "_nbAttaques"));
+        if (nbAtq == 0) nbAtq = 1;
 
         int score = int.Parse(LireValeur(cfgG, "combat_base_pct"))
-            + ((pvMax  - int.Parse(LireValeur(cfgG, "combat_pv_ref")))  / int.Parse(LireValeur(cfgG, "combat_pv_tranche")))  * int.Parse(LireValeur(cfgG, "combat_pv_pct"))
-            + ((caEff  - int.Parse(LireValeur(cfgG, "combat_ca_ref")))  / int.Parse(LireValeur(cfgG, "combat_ca_tranche")))  * int.Parse(LireValeur(cfgG, "combat_ca_pct"))
-            + ((atkEff - int.Parse(LireValeur(cfgG, "combat_atk_ref"))) / int.Parse(LireValeur(cfgG, "combat_atk_tranche"))) * int.Parse(LireValeur(cfgG, "combat_atk_pct"));
+            + Tranche(cfgG, pvMax,   "pv")
+            + Tranche(cfgG, caEff,   "ca")
+            + Tranche(cfgG, atkEff,  "atk")
+            + Tranche(cfgG, manaEff, "mana")
+            + Tranche(cfgG, chaEff,  "cha")
+            + Tranche(cfgG, agi,     "agi")
+            + Tranche(cfgG, niveau,  "niveau")
+            + (nbAtq - 1) * int.Parse(LireValeur(cfgG, "combat_attaques_pct"));
 
         score = Clamp(score, int.Parse(LireValeur(cfgG, "combat_plancher_joueur")), int.Parse(LireValeur(cfgG, "combat_plafond_joueur")));
 
@@ -78,8 +97,33 @@ public class CPHInline
             json = AjouterValeur(json, "combatsGagnes", 1);
             json = VerifierMonteeNiveau(json, nomJoueur);
 
+            // Mini-boss : loot garanti (rareté supérieure), si le sac a de la place
+            string lootMsg = "";
+            if (tier == "miniboss")
+            {
+                string inventaire = LireValeurString(json, "inventaire");
+                int nbItems = inventaire == "" ? 0 : inventaire.Split(',').Length;
+                int maxSac  = int.Parse(LireValeur(cfgG, "max_sac"));
+                if (nbItems < maxSac)
+                {
+                    string poolName = LireValeurString(cfgG, "mini_boss_loot_pool");
+                    string cfgLoot  = File.ReadAllText(CONFIG_QUETES);
+                    string lootRaw  = LireValeurString(cfgLoot, poolName);
+                    if (lootRaw == "") lootRaw = LireValeurString(cfgLoot, "loot_commun");
+                    string[] lootPool = lootRaw != "" ? lootRaw.Split(',') : new string[] { "Potion" };
+                    string loot = lootPool[rng.Next(lootPool.Length)].Trim();
+                    string nouvInv = inventaire == "" ? loot : inventaire + "," + loot;
+                    json = ModifierValeurString(json, "inventaire", nouvInv);
+                    lootMsg = " 🎁 Butin de mini-boss : " + loot + " !";
+                }
+                else
+                {
+                    lootMsg = " (sac plein, butin de mini-boss perdu !)";
+                }
+            }
+
             string baseMsg = nomJoueur + " affronte " + ennemNom + compTxt
-                           + " → VICTOIRE ! -" + perte + " PV (" + nvPV + "/" + pvMax + "), +" + recomp[0] + " XP, +" + recomp[1] + " RAM.";
+                           + " → VICTOIRE ! -" + perte + " PV (" + nvPV + "/" + pvMax + "), +" + recomp[0] + " XP, +" + recomp[1] + " RAM." + lootMsg;
 
             if (nvPV <= 0)
             {
@@ -99,7 +143,7 @@ public class CPHInline
         // === ÉCHEC ===
         json = AjouterValeur(json, "combatsPerdus", 1);
 
-        if (tier == "fort")
+        if (tier == "fort" || tier == "miniboss")
         {
             // KO + quête échouée + cooldown
             json = ModifierValeur(json, "pvActuels", "0", false);
@@ -171,8 +215,9 @@ public class CPHInline
 
     private int TierMod(string cfgG, string tier)
     {
-        if (tier == "faible") return int.Parse(LireValeur(cfgG, "combat_tier_faible_mod"));
-        if (tier == "fort")   return int.Parse(LireValeur(cfgG, "combat_tier_fort_mod"));
+        if (tier == "faible")   return int.Parse(LireValeur(cfgG, "combat_tier_faible_mod"));
+        if (tier == "fort")     return int.Parse(LireValeur(cfgG, "combat_tier_fort_mod"));
+        if (tier == "miniboss") return int.Parse(LireValeur(cfgG, "combat_tier_miniboss_mod"));
         return int.Parse(LireValeur(cfgG, "combat_tier_moyen_mod"));
     }
 
@@ -206,6 +251,16 @@ public class CPHInline
                 total += int.Parse(LireValeur(cfgItems, item + "_" + stat));
         }
         return total;
+    }
+
+    // Contribution d'une stat au score : ((valeur - ref) / tranche) * pct (clés combat_<prefixe>_*)
+    private int Tranche(string cfgG, int valeur, string prefixe)
+    {
+        int refv = int.Parse(LireValeur(cfgG, "combat_" + prefixe + "_ref"));
+        int tr   = int.Parse(LireValeur(cfgG, "combat_" + prefixe + "_tranche"));
+        int pct  = int.Parse(LireValeur(cfgG, "combat_" + prefixe + "_pct"));
+        if (tr == 0) tr = 1;
+        return ((valeur - refv) / tr) * pct;
     }
 
     private int Clamp(int v, int min, int max)
@@ -309,5 +364,16 @@ public class CPHInline
         string ancienne = json.Substring(posDebut, posFin - posDebut);
         string nouvelle = estTexte ? "\"" + val + "\"" : val;
         return json.Substring(0, posDebut) + nouvelle + json.Substring(posDebut + ancienne.Length);
+    }
+
+    private string ModifierValeurString(string json, string cle, string val)
+    {
+        string marqueur = "\"" + cle + "\": \"";
+        int posDebut    = json.IndexOf(marqueur);
+        if (posDebut == -1) return json;
+        posDebut       += marqueur.Length;
+        int posFin      = json.IndexOf("\"", posDebut);
+        if (posFin == -1) return json;
+        return json.Substring(0, posDebut) + val + json.Substring(posFin);
     }
 }

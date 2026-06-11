@@ -4,28 +4,28 @@
   "Insecte-Bug_degatsMax": 4,
   "Insecte-Bug_xp": 10,
   "Insecte-Bug_ram": 2,
-  "Insecte-Bug_tier": "faible",
+  "Insecte-Bug_tier": "miniboss",
 
   "Corbeau-Daemon_pv": 10,
   "Corbeau-Daemon_ca": 14,
   "Corbeau-Daemon_degatsMax": 6,
   "Corbeau-Daemon_xp": 25,
   "Corbeau-Daemon_ram": 5,
-  "Corbeau-Daemon_tier": "moyen",
+  "Corbeau-Daemon_tier": "miniboss",
 
   "Castor-Rootkit_pv": 15,
   "Castor-Rootkit_ca": 16,
   "Castor-Rootkit_degatsMax": 6,
   "Castor-Rootkit_xp": 40,
   "Castor-Rootkit_ram": 8,
-  "Castor-Rootkit_tier": "fort",
+  "Castor-Rootkit_tier": "miniboss",
 
   "Loup-Firewall_pv": 18,
   "Loup-Firewall_ca": 15,
   "Loup-Firewall_degatsMax": 8,
   "Loup-Firewall_xp": 60,
   "Loup-Firewall_ram": 12,
-  "Loup-Firewall_tier": "fort",
+  "Loup-Firewall_tier": "miniboss",
 
   "Martre-Trojan_pv": 30,
   "Martre-Trojan_ca": 12,
@@ -81,5 +81,33 @@
   "Vieux-Sage_degatsMax": 16,
   "Vieux-Sage_xp": 30,
   "Vieux-Sage_ram": 100,
-  "Vieux-Sage_tier": "fort"
+  "Vieux-Sage_tier": "fort",
+
+  "Reine-Bug_pv": 300,
+  "Reine-Bug_ca": 14,
+  "Reine-Bug_degatsMax": 8,
+  "Reine-Bug_xp": 80,
+  "Reine-Bug_ram": 30,
+  "Reine-Bug_tier": "boss",
+
+  "Munin-Daemon_pv": 400,
+  "Munin-Daemon_ca": 16,
+  "Munin-Daemon_degatsMax": 10,
+  "Munin-Daemon_xp": 100,
+  "Munin-Daemon_ram": 40,
+  "Munin-Daemon_tier": "boss",
+
+  "Hector-Pierre Castor_pv": 600,
+  "Hector-Pierre Castor_ca": 18,
+  "Hector-Pierre Castor_degatsMax": 12,
+  "Hector-Pierre Castor_xp": 150,
+  "Hector-Pierre Castor_ram": 60,
+  "Hector-Pierre Castor_tier": "boss",
+
+  "Fenrir-Firewall_pv": 500,
+  "Fenrir-Firewall_ca": 17,
+  "Fenrir-Firewall_degatsMax": 10,
+  "Fenrir-Firewall_xp": 120,
+  "Fenrir-Firewall_ram": 50,
+  "Fenrir-Firewall_tier": "boss"
 }

@@ -9,7 +9,7 @@ public class CPHInline
     public bool Execute()
     {
         string nomJoueur = args["user"].ToString();
-        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, $"{nomJoueur}.json");
+        string cheminFichier = Path.Combine(DOSSIER_JOUEURS, nomJoueur.ToLower() + ".json");
 
         if (!File.Exists(cheminFichier))
         {

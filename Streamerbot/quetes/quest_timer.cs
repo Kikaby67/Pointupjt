@@ -26,6 +26,8 @@ public class CPHInline
         int cooldownDefaite      = int.Parse(LireValeur(cfgG, "quete_cooldown_defaite_secondes"));
         int expireSecs           = int.Parse(LireValeur(cfgG, "rencontre_expire_secondes"));
         int intervalleRenc       = int.Parse(LireValeur(cfgG, "quete_rencontre_intervalle_secondes"));
+        int miniBossNivMin       = int.Parse(LireValeur(cfgG, "mini_boss_niveau_min"));
+        int miniBossChance       = int.Parse(LireValeur(cfgG, "mini_boss_chance"));
 
         foreach (string chemin in fichiers)
         {
@@ -90,7 +92,11 @@ public class CPHInline
                     if (typeRoll == 0)
                     {
                         // Rencontre : pause quête + propose les 3 choix (résolus par commande)
-                        string[] ennemis = LireValeurString(cfgG, "rencontre_ennemis").Split(',');
+                        // Sous-tirage mini-boss : seulement à partir du niveau requis
+                        int niveauJoueur = int.Parse(LireValeur(json, "niveau"));
+                        bool estMiniBoss = niveauJoueur >= miniBossNivMin && rng.Next(100) < miniBossChance;
+                        string poolRenc = estMiniBoss ? "rencontre_mini_boss" : "rencontre_ennemis";
+                        string[] ennemis = LireValeurString(cfgG, poolRenc).Split(',');
                         string ennemiChoisi = ennemis[rng.Next(ennemis.Length)].Trim();
 
                         json = ModifierValeur(json, "enRencontre", "true", false);
@@ -100,7 +106,10 @@ public class CPHInline
                         json = ModifierValeur(json, "ennemiNom", ennemiChoisi, true);
                         json = ModifierValeur(json, "rencontreExpire", (maintenant + expireSecs).ToString(), false);
                         File.WriteAllText(chemin, json);
-                        CPH.SendMessage(nomJoueur + ", un " + ennemiChoisi + " surgit sur ta route ! Quête en pause. Tape !combat pour te battre, !fuir pour lui échapper ou !discuter afin de tenter ta chance. (" + (expireSecs / 60) + " min)");
+                        if (estMiniBoss)
+                            CPH.SendMessage(nomJoueur + ", ⚠️ MINI-BOSS ! " + ennemiChoisi + " te barre la route ! Quête en pause. Tape !combat pour l'affronter, !fuir pour tenter de l'éviter ou !discuter. (" + (expireSecs / 60) + " min)");
+                        else
+                            CPH.SendMessage(nomJoueur + ", un " + ennemiChoisi + " surgit sur ta route ! Quête en pause. Tape !combat pour te battre, !fuir pour lui échapper ou !discuter afin de tenter ta chance. (" + (expireSecs / 60) + " min)");
                         encounterLancee = true;
                     }
                     else if (typeRoll == 1)
@@ -272,7 +281,20 @@ public class CPHInline
                     int nbItems = inventaire == "" ? 0 : inventaire.Split(',').Length;
                     if (nbItems < maxSac)
                     {
-                        string   lootRaw  = LireValeurString(File.ReadAllText(CONFIG_QUETES), "loot_commun");
+                        // Tirage de rareté : légendaire / épique / rare / commun (chances dans config_global)
+                        int rar  = rng.Next(100);
+                        int cLeg = int.Parse(LireValeur(cfgG, "loot_chance_legendaire"));
+                        int cEpi = int.Parse(LireValeur(cfgG, "loot_chance_epique"));
+                        int cRar = int.Parse(LireValeur(cfgG, "loot_chance_rare"));
+                        string pool;
+                        if      (rar < cLeg)               pool = "loot_legendaire";
+                        else if (rar < cLeg + cEpi)        pool = "loot_epique";
+                        else if (rar < cLeg + cEpi + cRar) pool = "loot_rare";
+                        else                               pool = "loot_commun";
+
+                        string   cfgLoot  = File.ReadAllText(CONFIG_QUETES);
+                        string   lootRaw  = LireValeurString(cfgLoot, pool);
+                        if (lootRaw == "") lootRaw = LireValeurString(cfgLoot, "loot_commun");
                         string[] lootPool = lootRaw != "" ? lootRaw.Split(',') : new string[] { "Potion" };
                         string   loot     = lootPool[rng.Next(lootPool.Length)].Trim();
                         string nouvInventaire = inventaire == "" ? loot : inventaire + "," + loot;

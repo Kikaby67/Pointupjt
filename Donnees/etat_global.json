@@ -1,0 +1,12 @@
+{
+  "bossActif": false,
+  "bossPhase": "",
+  "bossNom": "",
+  "bossPVMax": 0,
+  "bossPVActuels": 0,
+  "areneFin": 0,
+  "ordre": "",
+  "tourIndex": 0,
+  "tourDeadline": 0,
+  "participants": ""
+}

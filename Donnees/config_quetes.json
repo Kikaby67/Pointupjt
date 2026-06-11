@@ -117,7 +117,7 @@
   "quete013_ram": 9,
 
   "loot_commun": "Ligne-Reseau,Morceau-Arbre-Serveur,Potion,Bague-de-protection,Armure-de-feuille,Gants-de-force",
-  "loot_rare": "",
-  "loot_epique": "",
-  "loot_legendaire": ""
+  "loot_rare": "Dague-Kernel,Hache-Fork,Cotte-Réseau,Plastron-Sève,Anneau-Daemon,Brassard-Surcharge,Grande-Potion,Cristal-de-Données",
+  "loot_epique": "Faux-Quantique,Égide-Pare-feu,Talisman-Quantique,Élixir-d'Arbonet,Noyau-Corrompu",
+  "loot_legendaire": "Lame-du-Noyau,Carapace-du-Gardien,Coeur-d'Arbonet,Résine-de-Pointu"
 }
